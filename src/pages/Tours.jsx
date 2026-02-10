@@ -80,6 +80,45 @@ const TOURS = [
       'Listed activities',
     ],
   },
+  {
+    id: 'west-fjords',
+    name: '5-day West Fjords Explorer',
+    description: 'Remote wilderness and dramatic cliffs of the Westfjords peninsula',
+    days: 5,
+    pricePerPerson: 610,
+    image: 'https://picsum.photos/seed/westfjords-iceland/800/450',
+    includedActivities: [
+      { name: 'Sea Kayaking', requiresShoeSize: false },
+      { name: 'Dynjandi Waterfall Hike', requiresShoeSize: true },
+      { name: 'Arctic Fox Centre Visit', requiresShoeSize: false },
+    ],
+    included: [
+      '4 nights accommodation',
+      'All transportation',
+      'Professional guide',
+      'Listed activities',
+      'Breakfast daily',
+    ],
+  },
+  {
+    id: 'snæfellsnes',
+    name: '4-day Snæfellsnes Peninsula',
+    description: 'Discover the mystical glacier volcano and dramatic lava coastline',
+    days: 4,
+    pricePerPerson: 490,
+    image: 'https://picsum.photos/seed/snaefellsnes-iceland/800/450',
+    includedActivities: [
+      { name: 'Glacier Walk on Snæfellsjökull', requiresShoeSize: true },
+      { name: 'Lava Tube Exploration', requiresShoeSize: false },
+      { name: 'Whale Watching from Grundarfjörður', requiresShoeSize: false },
+    ],
+    included: [
+      '3 nights accommodation',
+      'All transportation',
+      'Professional guide',
+      'Listed activities',
+    ],
+  },
 ];
 
 export default function Tours() {
@@ -92,7 +131,7 @@ export default function Tours() {
         Multi-day guided tours with accommodations and activities included.
       </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {TOURS.map((tour) => (
           <div
             key={tour.id}
@@ -131,7 +170,7 @@ export default function Tours() {
               </div>
 
               {/* What's Included */}
-              <div className="mb-4 bg-gray-50 rounded p-3">
+              {/* <div className="mb-4 bg-gray-50 rounded p-3">
                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
                   What's Included:
                 </h4>
@@ -143,7 +182,7 @@ export default function Tours() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </div> */}
 
               <div className="flex items-center justify-between mb-4">
                 <div>

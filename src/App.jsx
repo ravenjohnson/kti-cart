@@ -50,12 +50,22 @@ export default function App() {
               </Layout>
             }
           />
-          {/* Activity detail - full screen, custom header */}
-          <Route path="/activities/:activityId" element={<ActivityDetail />} />
-
-          {/* Tour detail - full screen, custom header */}
-          <Route path="/tours/:tourId" element={<TourDetail />} />
-
+          <Route
+            path="/activities/:activityId"
+            element={
+              <Layout>
+                <ActivityDetail />
+              </Layout>
+            }
+          />
+          <Route
+            path="/tours/:tourId"
+            element={
+              <Layout>
+                <TourDetail />
+              </Layout>
+            }
+          />
           <Route
             path="/car-rentals"
             element={
@@ -64,9 +74,14 @@ export default function App() {
               </Layout>
             }
           />
-
-          {/* Car rental detail - full screen, custom header */}
-          <Route path="/car-rentals/:carId" element={<CarRentalDetail />} />
+          <Route
+            path="/car-rentals/:carId"
+            element={
+              <Layout>
+                <CarRentalDetail />
+              </Layout>
+            }
+          />
 
           {/* Checkout route - full screen, no layout wrapper */}
           <Route path="/checkout" element={<Checkout />} />

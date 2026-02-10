@@ -351,7 +351,7 @@ export default function ActivityDetail() {
   const { activityId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addToCart, updateCartItem, cartItems, cartCount } = useCart();
+  const { addToCart, updateCartItem, cartItems } = useCart();
 
   const editItemId = searchParams.get('edit');
   const existingItem = editItemId ? cartItems.find((item) => item.id === editItemId) : null;
@@ -416,34 +416,19 @@ export default function ActivityDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link
-            to={isEditing ? '/checkout' : '/activities'}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            ← {isEditing ? 'Back to Cart' : 'Back to Activities'}
-          </Link>
-          <Link
-            to="/checkout"
-            className="relative inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Cart
-            {cartCount > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-600 rounded-full">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      <nav className="text-sm mb-6">
+        <Link to="/activities" className="text-gray-500 hover:text-gray-700">Activities</Link>
+        <span className="mx-2 text-gray-400">/</span>
+        {isEditing ? (
+          <>
+            <Link to="/checkout" className="text-gray-500 hover:text-gray-700">Cart</Link>
+            <span className="mx-2 text-gray-400">/</span>
+          </>
+        ) : null}
+        <span className="text-gray-900">{activity.name}</span>
+      </nav>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Left column — main content */}
@@ -587,10 +572,13 @@ export default function ActivityDetail() {
                     +
                   </button>
                 </div>
+                {activity.minAge > 0 && (
+                <p className="mt-3 text-xs text-gray-500 ">Minimum age: {activity.minAge} years</p>
+              )}
               </div>
 
               {/* Date selector */}
-              <div className="mb-5">
+              {/* <div className="mb-5">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select date
                 </label>
@@ -602,7 +590,7 @@ export default function ActivityDetail() {
                   onChange={(e) => setSelectedDate(e.target.value || null)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </div>
+              </div> */}
 
               {/* Total */}
               <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
@@ -619,15 +607,10 @@ export default function ActivityDetail() {
               >
                 {isEditing ? 'Update Cart' : added ? '✓ Added to Cart' : `Add to Cart — $${total}`}
               </button>
-
-              {activity.minAge > 0 && (
-                <p className="mt-3 text-xs text-gray-500 text-center">Minimum age: {activity.minAge} years</p>
-              )}
             </div>
           </div>
 
         </div>
-      </div>
     </div>
   );
 }
