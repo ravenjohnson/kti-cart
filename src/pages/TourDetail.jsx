@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../CartContext';
 
@@ -7,22 +7,24 @@ import { useCart } from '../CartContext';
 // ============================================================================
 
 const TOUR_DATA = {
+
+  // ── SELF-DRIVE, 7 days ──────────────────────────────────────────────────
   'ring-road': {
     id: 'ring-road',
     title: '7-day Ring Road Expedition',
     image: 'https://picsum.photos/seed/ring-road-iceland/1200/500',
     tourType: 'self_drive',
-    durationDays: 7,
-    durationNights: 6,
-    season: { startDate: '2025-05-01', endDate: '2025-09-30' },
+    totalDays: 7,
     priceFrom: 890,
+    season: { startDate: '2025-05-01', endDate: '2025-09-30' },
+    description: "Circle the entire island of Iceland at your own pace on the legendary Route 1. In seven days you'll encounter thundering waterfalls, vast glaciers, volcanic craters, and dramatic fjords.",
     highlights: [
-      'Drive the legendary Ring Road (Route 1) — the full circle of Iceland',
-      'Walk behind Seljalandsfoss waterfall and stand below Skógafoss',
+      'Drive the full Ring Road — the complete circle of Iceland',
+      'Walk behind the curtain of Seljalandsfoss waterfall',
       'Watch icebergs drift at Jökulsárlón Glacier Lagoon',
-      'Explore volcanic craters and geothermal wonders at Lake Mývatn',
+      'Explore volcanic craters and geothermal pools at Lake Mývatn',
       'Spot puffins, Arctic foxes, and humpback whales in season',
-      'Experience the midnight sun — 24 hours of light in summer',
+      'Experience the midnight sun in summer',
     ],
     included: [
       '6 nights accommodation (guesthouse / hotel)',
@@ -30,191 +32,35 @@ const TOUR_DATA = {
       'Detailed self-drive road book & GPS route',
       'Welcome pack with maps and local tips',
       '24/7 emergency assistance hotline',
-      'Ferry tickets where applicable',
       'All road and bridge tolls',
-      'Free cancellation up to 14 days',
     ],
-    extraIncluded: [
-      'Airport pickup on Day 1',
-      'Airport dropoff on Day 7',
-    ],
-    notIncluded: [
-      'Flights to / from Iceland',
-      'Travel insurance (strongly recommended)',
-      'Meals and drinks',
-      'Activity entrance fees',
-      'Fuel costs',
-      'Personal expenses',
-    ],
-    bringWithYou: [
-      'Waterproof jacket & trousers',
-      'Sturdy hiking boots',
-      'Swimwear (for hot springs)',
-      'Camera or phone with good camera',
-      'Sunscreen (24 h daylight in summer)',
-      'Cash (some remote areas are card-free)',
-    ],
+    extraIncluded: ['Airport car pickup on Day 1', 'Airport car return on Day 7'],
+    notIncluded: ['Flights', 'Travel insurance', 'Meals', 'Activity entrance fees', 'Fuel'],
+    bringWithYou: ['Waterproof jacket', 'Hiking boots', 'Swimwear', 'Camera', 'Sunscreen', 'Cash'],
     conditions: {
-      cancellation:
-        'Free cancellation up to 14 days before departure. 50% refund for cancellations 7–14 days before. No refund within 7 days of departure.',
-      importantInfo:
-        'F-roads (highland tracks) require a 4x4 vehicle and are not included in the base package. Minimum driver age is 20 years. A valid driving licence is required. Speed limits must be strictly observed.',
-      terms:
-        'Booking confirmation is sent within 24 hours. Final payment is due 30 days before departure. All prices are per person based on double occupancy unless otherwise stated.',
+      cancellation: 'Free cancellation up to 14 days before departure. 50% refund 7–14 days before. No refund within 7 days.',
+      importantInfo: 'F-roads require a 4x4 vehicle. Minimum driver age 20. Valid licence required.',
+      terms: 'Booking confirmation within 24 hours. Final payment due 30 days before departure.',
+    },
+    travelStyle: ['Adventure', 'Nature', 'Road Trip'],
+    wayOfTravel: ['Self-drive'],
+    interests: ['Waterfalls', 'Glaciers', 'Hot Springs', 'Wildlife', 'Photography'],
+    regionTags: ['South Iceland', 'East Iceland', 'North Iceland', 'West Iceland'],
+    transport: {
+      allowCarRental: true,
+      advisedAllDays: true,
+      allowedCarCategories: ['Compact SUV', '4x4 SUV', 'Large 4x4'],
+      notes: '4x4 strongly recommended. Highland F-roads require 4x4 clearance.',
+      recommendedCar: {
+        make: 'Toyota',
+        model: 'Land Cruiser',
+        type: '4x4 SUV',
+        transmission: 'Automatic',
+        pricePerDay: 120,
+        image: 'https://picsum.photos/seed/4x4-offroad-iceland/400/280',
+      },
     },
     availabilityLabels: ['Self-drive', 'Guided (on request)', 'Private'],
-    preferences: {
-      travelStyle: ['Adventure', 'Nature', 'Road Trip'],
-      wayOfTravel: ['Self-drive', 'Small group'],
-      interests: ['Waterfalls', 'Glaciers', 'Hot Springs', 'Wildlife', 'Photography'],
-      regions: ['South Iceland', 'East Iceland', 'North Iceland', 'West Iceland'],
-      durationTag: '7 days',
-    },
-    route: {
-      numberOfStays: 6,
-      stops: [
-        { name: 'Reykjavík', nights: 1 },
-        { name: 'South Coast (Vík)', nights: 1 },
-        { name: 'Jökulsárlón', nights: 1 },
-        { name: 'East Fjords', nights: 1 },
-        { name: 'Mývatn', nights: 1 },
-        { name: 'Snæfellsnes', nights: 1, optional: true },
-        { name: 'Reykjavík (departure)', nights: 0 },
-      ],
-    },
-    accommodationsByStop: [
-      {
-        stopName: 'Reykjavík',
-        options: [
-          { name: 'Reykjavík City Hotel', stars: 3, description: 'Central location near the main attractions.', roomTypes: ['Double', 'Twin', 'Single'] },
-          { name: 'Fosshotel Reykjavík', stars: 4, description: 'Modern design hotel with harbour views.', roomTypes: ['Double', 'Twin', 'Family'] },
-        ],
-      },
-      {
-        stopName: 'South Coast (Vík)',
-        options: [
-          { name: 'Vík Guesthouse', stars: 2, description: 'Cosy rooms a short walk from the black sand beach.', roomTypes: ['Double', 'Twin'] },
-        ],
-      },
-      {
-        stopName: 'Jökulsárlón',
-        options: [
-          { name: 'Glacier Lagoon Hotel', stars: 3, description: 'Steps from the glacier lagoon — fall asleep to icebergs.', roomTypes: ['Double', 'Family'] },
-        ],
-      },
-      {
-        stopName: 'East Fjords',
-        options: [
-          { name: 'Fjords Retreat', stars: 2, description: 'Scenic fjordside setting with mountain views.', roomTypes: ['Double', 'Twin'] },
-        ],
-      },
-      {
-        stopName: 'Mývatn',
-        options: [
-          { name: 'Mývatn Guesthouse', stars: 2, description: 'Comfortable rooms close to the geothermal fields.', roomTypes: ['Double', 'Twin', 'Single'] },
-        ],
-      },
-      {
-        stopName: 'Snæfellsnes',
-        options: [
-          { name: 'Snæfellsnes Lodge', stars: 3, description: 'Panoramic glacier views, hot tub on site.', roomTypes: ['Double', 'Twin'] },
-        ],
-      },
-    ],
-    transport: {
-      level: 'required',
-      allowedCarCategories: ['Compact SUV', '4x4 SUV', 'Large 4x4'],
-      durationMode: 'all_days',
-      note: '4x4 vehicle strongly recommended for the full route. Some sections and all optional highland detours require 4x4 clearance.',
-    },
-    departures: [
-      { date: '2025-05-10', times: ['08:00'] },
-      { date: '2025-05-24', times: ['08:00'] },
-      { date: '2025-06-07', times: ['08:00', '10:00'] },
-      { date: '2025-06-21', times: ['08:00'] },
-      { date: '2025-07-05', times: ['08:00', '10:00'] },
-      { date: '2025-07-19', times: ['08:00'] },
-      { date: '2025-08-02', times: ['08:00'] },
-      { date: '2025-08-16', times: ['08:00'] },
-      { date: '2025-09-06', times: ['09:00'] },
-      { date: '2025-09-20', times: ['09:00'] },
-    ],
-    itinerary: [
-      {
-        dayNumber: 1, title: 'Arrival & Reykjavík',
-        description: 'Arrive at Keflavík International Airport. Collect your rental car and drive to Reykjavík. Explore Hallgrímskirkja church, the old harbour area, and the colourful streets of the capital.',
-        activities: [
-          { title: 'Airport car collection', included: true },
-          { title: 'Hallgrímskirkja Church', included: true, duration: '1 hr' },
-          { title: 'Reykjavík harbour walk', included: true, duration: '1–2 hrs' },
-          { title: 'Whale watching tour', included: false, duration: '3 hrs', time: '13:00' },
-        ],
-        overnightStop: 'Reykjavík',
-      },
-      {
-        dayNumber: 2, title: 'Golden Circle',
-        description: 'Þingvellir National Park, Geysir geothermal area with the spouting Strokkur, and the thundering Gullfoss waterfall — the classic trio done at your own pace.',
-        activities: [
-          { title: 'Þingvellir National Park', included: true, duration: '2 hrs' },
-          { title: 'Geysir & Strokkur', included: true, duration: '1.5 hrs' },
-          { title: 'Gullfoss Waterfall', included: true, duration: '1 hr' },
-          { title: 'Secret Lagoon hot spring', included: false, duration: '2 hrs' },
-        ],
-        overnightStop: 'South Coast (Vík)',
-      },
-      {
-        dayNumber: 3, title: 'South Coast Waterfalls',
-        description: 'Walk behind the curtain of Seljalandsfoss, photograph the mighty Skógafoss, then step onto the jet-black sands of Reynisfjara beach beneath dramatic basalt columns.',
-        activities: [
-          { title: 'Seljalandsfoss Waterfall', included: true, duration: '45 min' },
-          { title: 'Skógafoss Waterfall', included: true, duration: '45 min' },
-          { title: 'Reynisfjara Black Sand Beach', included: true, duration: '1 hr' },
-          { title: 'Horse riding on the beach', included: false, duration: '2 hrs' },
-        ],
-        overnightStop: 'South Coast (Vík)',
-      },
-      {
-        dayNumber: 4, title: 'Glacier Lagoon & Diamond Beach',
-        description: 'Icebergs calve from Breiðamerkurjökull and drift slowly through Jökulsárlón lagoon. Just across the road, "Diamond Beach" glitters with ice chunks on black sand.',
-        activities: [
-          { title: 'Jökulsárlón Glacier Lagoon', included: true, duration: '2 hrs' },
-          { title: 'Diamond Beach', included: true, duration: '1 hr' },
-          { title: 'Amphibian boat tour', included: false, duration: '45 min', time: '10:00' },
-          { title: 'Zodiac glacier tour', included: false, duration: '1 hr', time: '14:00' },
-        ],
-        overnightStop: 'Jökulsárlón',
-      },
-      {
-        dayNumber: 5, title: 'East Fjords',
-        description: 'Winding cliff roads reveal one dramatic fjord after another. Stop in the charming village of Seyðisfjörður and keep your eyes peeled for nesting puffins in season.',
-        activities: [
-          { title: 'Scenic East Fjords drive', included: true },
-          { title: 'Seyðisfjörður village', included: true, duration: '2 hrs' },
-          { title: 'Puffin watching (seasonal)', included: true, duration: '1 hr' },
-        ],
-        overnightStop: 'East Fjords',
-      },
-      {
-        dayNumber: 6, title: 'Lake Mývatn & Northern Wonders',
-        description: 'Explore one of Iceland\'s most otherworldly landscapes — pseudocraters, boiling mud pools, lava pillars, and the milky-blue Mývatn Nature Baths.',
-        activities: [
-          { title: 'Dettifoss Waterfall', included: true, duration: '1.5 hrs' },
-          { title: 'Mývatn volcanic landscape', included: true, duration: '2 hrs' },
-          { title: 'Mývatn Nature Baths', included: false, duration: '2 hrs', time: '17:00' },
-          { title: 'Whale watching (Húsavík)', included: false, duration: '3 hrs', time: '09:00' },
-        ],
-        overnightStop: 'Mývatn',
-      },
-      {
-        dayNumber: 7, title: 'Snæfellsnes & Return',
-        description: 'Optional scenic detour through the Snæfellsnes Peninsula, crowned by the mystical Snæfellsjökull glacier. Then head to Keflavík to return your car and catch your flight.',
-        activities: [
-          { title: 'Snæfellsjökull glacier view', included: false, duration: '3 hrs' },
-          { title: 'Car return at Keflavík', included: true },
-        ],
-        overnightStop: null,
-      },
-    ],
     media: { images: [
       'https://picsum.photos/seed/rr-mountain/600/400',
       'https://picsum.photos/seed/rr-waterfall/600/400',
@@ -222,155 +68,289 @@ const TOUR_DATA = {
       'https://picsum.photos/seed/rr-volcano/600/400',
       'https://picsum.photos/seed/rr-ocean/600/400',
       'https://picsum.photos/seed/rr-sunset/600/400',
-      'https://picsum.photos/seed/rr-bird/600/400',
-      'https://picsum.photos/seed/rr-landscape/600/400',
-      'https://picsum.photos/seed/rr-dawn/600/400',
-      'https://picsum.photos/seed/rr-peak/600/400',
     ] },
     extrasByCategory: [
+      { category: 'Activities', products: [
+        { title: 'Glacier Hike', description: 'Walk on a glacier with a certified guide.', price: 89, pricingUnit: 'per_person' },
+        { title: 'Northern Lights Tour', description: 'Guided minibus tour chasing the aurora.', price: 65, pricingUnit: 'per_person' },
+      ]},
+      { category: 'Upgrades', products: [
+        { title: 'Hotel Upgrade', description: 'Upgrade all stays to 4-star hotels.', price: 250, pricingUnit: 'per_person' },
+        { title: '4x4 Vehicle Upgrade', description: 'Full-size 4x4 for F-road access.', price: 35, pricingUnit: 'per_day' },
+      ]},
+    ],
+
+    // Day-by-day interactive structure
+    days: [
       {
-        category: 'Activities',
-        products: [
-          { title: 'Glacier Hike', description: 'Walk on a glacier with a certified guide. All equipment provided.', price: 89, pricingUnit: 'per_person' },
-          { title: 'Northern Lights Tour', description: 'Guided minibus tour to chase the best aurora viewing spots.', price: 65, pricingUnit: 'per_person' },
-          { title: 'Horse Riding', description: '2-hour ride on Icelandic horses through dramatic lava fields.', price: 120, pricingUnit: 'per_person' },
+        dayNumber: 1,
+        date: '2025-06-07',
+        city: 'Reykjavík',
+        region: 'Capital Region',
+        accommodations: [
+          { id: 'kex-hostel',   name: 'KEX Hostel',              rating: 8.6, reviewCount: 2613, pricePerNight: 89,  category: 'Hostel',     checkIn: '15:00', checkOut: '11:00', location: '1 km from centre', image: 'https://picsum.photos/seed/kex-hostel/400/280' },
+          { id: 'rk-lights',   name: 'Reykjavík Lights Hotel',  rating: 8.8, reviewCount: 1258, pricePerNight: 145, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: '0.4 km from centre', image: 'https://picsum.photos/seed/reykjavik-lights/400/280' },
+          { id: 'rey-apts',    name: 'Rey Apartments',          rating: 9.0, reviewCount: 282,  pricePerNight: 195, category: 'Apartment',   checkIn: '15:00', checkOut: '11:00', location: '0.6 km from centre', image: 'https://picsum.photos/seed/rey-apartments/400/280' },
+        ],
+        activities: [
+          { id: 'hallgrimskirkja',  name: 'Hallgrímskirkja Church Tower',     rating: 8.5, reviewCount: 3200, pricePerPerson: 18,  duration: '1.5h',     image: 'https://picsum.photos/seed/hallgrimskirkja/400/280',     description: 'Ride the elevator to the top of Reykjavík\'s iconic church for a 360° panoramic view across the city, the harbour, and the surrounding mountains. The tower is 74 metres tall and on a clear day you can see as far as Mount Esja.' },
+          { id: 'whale-rvk',        name: 'Whale Watching from Reykjavík',    rating: 9.2, reviewCount: 5100, pricePerPerson: 89,  duration: '3h',       image: 'https://picsum.photos/seed/whale-watching-rvk/400/280',   description: 'Board a traditional oak boat from the Old Harbour and head into Faxaflói Bay. Humpback whales, minke whales, and white-beaked dolphins are commonly spotted. A marine biologist guide narrates throughout.' },
+          { id: 'rvk-walk',         name: 'Reykjavík City Walking Tour',      rating: 8.7, reviewCount: 2800, pricePerPerson: 35,  duration: '2h',       image: 'https://picsum.photos/seed/reykjavik-city-walk/400/280',   description: 'Explore the colourful streets of the world\'s northernmost capital with a local guide. Visit Tjörnin lake, the parliament building, Laugavegur shopping street, and the Sun Voyager sculpture on the seafront.' },
+          { id: 'blue-lagoon-day',  name: 'Blue Lagoon Day Trip',             rating: 9.0, reviewCount: 4500, pricePerPerson: 65,  duration: '4h',       image: 'https://picsum.photos/seed/blue-lagoon-day/400/280',       description: 'Soak in the famous geothermal lagoon surrounded by black lava fields, 45 minutes from Reykjavík. The milky-blue water is rich in silica and minerals. Includes return transport and Comfort entry with silica mud mask and algae mask.' },
         ],
       },
       {
-        category: 'Meals',
-        products: [
-          { title: 'Half Board', description: 'Breakfast and dinner included at each accommodation stop.', price: 85, pricingUnit: 'per_person' },
-          { title: 'Full Board', description: 'All meals included throughout the entire tour.', price: 140, pricingUnit: 'per_person' },
+        dayNumber: 2,
+        date: '2025-06-08',
+        city: 'Vík',
+        region: 'South Iceland',
+        accommodations: [
+          { id: 'vik-guesthouse', name: 'Vík Guesthouse',       rating: 8.4, reviewCount: 890,  pricePerNight: 120, category: 'Guesthouse',  checkIn: '14:00', checkOut: '11:00', location: '0.3 km from beach', image: 'https://picsum.photos/seed/vik-guesthouse/400/280' },
+          { id: 'icelandair-vik', name: 'Icelandair Hotel Vík', rating: 8.9, reviewCount: 1560, pricePerNight: 185, category: '4-star Hotel', checkIn: '15:00', checkOut: '12:00', location: '1 km from centre',  image: 'https://picsum.photos/seed/icelandair-vik/400/280' },
+        ],
+        activities: [
+          { id: 'seljalandsfoss',  name: 'Seljalandsfoss Waterfall',          rating: 9.1, reviewCount: 7200, pricePerPerson: 25,  duration: '1h',       image: 'https://picsum.photos/seed/seljalandsfoss/400/280',  description: 'One of Iceland\'s most photographed waterfalls — and the only one you can walk behind. A narrow path leads through the cave behind the 60-metre cascade. Best visited in the golden evening light of the midnight sun.' },
+          { id: 'skogafoss',       name: 'Skógafoss Waterfall',               rating: 9.0, reviewCount: 6800, pricePerPerson: 20,  duration: '1h',       image: 'https://picsum.photos/seed/skogafoss/400/280',       description: 'Stand at the base of this 62-metre waterfall and feel the mist on your face, or climb the 527 steps to the viewing platform for sweeping views over the south coast. According to legend, a Viking hid a treasure chest inside the cave behind the falls.' },
+          { id: 'reynisfjara',     name: 'Reynisfjara Black Sand Beach',      rating: 9.3, reviewCount: 8900, pricePerPerson: 15,  duration: '1.5h',     image: 'https://picsum.photos/seed/reynisfjara/400/280',     description: 'Walk the dramatic jet-black sand beach framed by towering basalt columns and sea stacks. Watch for sneaker waves and spot nesting puffins on the cliffs in summer. One of the most visited natural sites in Iceland.' },
+          { id: 'glacier-hike',    name: 'Glacier Hike on Sólheimajökull',   rating: 9.2, reviewCount: 3400, pricePerPerson: 89,  duration: '3h',       image: 'https://picsum.photos/seed/solheimajokull/400/280',  description: 'Strap on crampons and hike the outlet glacier of Mýrdalsjökull with a certified glacier guide. Explore crevasses, ice formations, and blue ice tunnels. Harness, helmet, and all technical gear are provided.' },
         ],
       },
       {
-        category: 'Upgrades',
-        products: [
-          { title: 'Hotel Upgrade', description: 'Upgrade all stays to 4-star hotels for extra comfort.', price: 250, pricingUnit: 'per_person' },
-          { title: '4x4 Vehicle Upgrade', description: 'Full-size 4x4 for F-road and highland access.', price: 35, pricingUnit: 'per_day' },
+        dayNumber: 3,
+        date: '2025-06-09',
+        city: 'Jökulsárlón',
+        region: 'East Iceland',
+        accommodations: [
+          { id: 'glacier-lagoon-hotel', name: 'Glacier Lagoon Hotel', rating: 8.7, reviewCount: 620, pricePerNight: 225, category: '3-star Hotel', checkIn: '15:00', checkOut: '11:00', location: 'Steps from the lagoon', image: 'https://picsum.photos/seed/glacier-lagoon-hotel/400/280' },
+          { id: 'jokull-hostel',        name: 'Jökull Hostel',        rating: 7.9, reviewCount: 445, pricePerNight: 85,  category: 'Hostel',      checkIn: '14:00', checkOut: '10:00', location: '2 km from lagoon',   image: 'https://picsum.photos/seed/jokull-hostel/400/280' },
+        ],
+        activities: [
+          { id: 'lagoon-boat',   name: 'Jökulsárlón Glacier Lagoon Boat',  rating: 9.4, reviewCount: 5600, pricePerPerson: 59,  duration: '45 min',   image: 'https://picsum.photos/seed/lagoon-boat/400/280',    description: 'Cruise among floating icebergs calved from the Breiðamerkurjökull glacier on an amphibious boat. Your guide explains the glaciology, wildlife, and environmental changes. Seals often rest on the ice floes close by.' },
+          { id: 'diamond-beach', name: 'Diamond Beach Walk',               rating: 9.2, reviewCount: 4300, pricePerPerson: 12,  duration: '1h',       image: 'https://picsum.photos/seed/diamond-beach/400/280',  description: 'Cross the road from the lagoon to find translucent ice chunks washed up on the black sand — nature\'s own diamonds. Best photographed in morning light or under the midnight sun. A short but unforgettable walk.' },
+          { id: 'zodiac-tour',   name: 'Zodiac Glacier Tour',              rating: 9.5, reviewCount: 2100, pricePerPerson: 110, duration: '1.5h',     image: 'https://picsum.photos/seed/zodiac-glacier/400/280', description: 'Get up close to the glacier face on a fast Zodiac inflatable. Navigate between towering icebergs and reach areas the amphibian boats cannot. Small groups of 8 max. Dry suits and full safety equipment provided.' },
+        ],
+      },
+      {
+        dayNumber: 4,
+        date: '2025-06-10',
+        city: 'Seyðisfjörður',
+        region: 'East Fjords',
+        accommodations: [
+          { id: 'aldan-hotel',   name: 'Aldan Hotel',         rating: 8.8, reviewCount: 380, pricePerNight: 160, category: 'Boutique Hotel', checkIn: '15:00', checkOut: '11:00', location: 'Town centre', image: 'https://picsum.photos/seed/aldan-hotel/400/280' },
+          { id: 'hafaldan-hi',   name: 'Hafaldan HI Hostel',  rating: 8.5, reviewCount: 720, pricePerNight: 75,  category: 'Hostel',         checkIn: '14:00', checkOut: '10:00', location: '0.5 km from ferry', image: 'https://picsum.photos/seed/hafaldan-hostel/400/280' },
+        ],
+        activities: [
+          { id: 'seydis-village', name: 'Seyðisfjörður Village Tour',     rating: 8.9, reviewCount: 1200, pricePerPerson: 45,  duration: '2h',       image: 'https://picsum.photos/seed/seydisfjordur-village/400/280', description: 'Wander the rainbow street and timber-framed Norwegian houses of this artistic fjord village with a local guide. Visit the 19th-century blue church, the technical museum, and hear stories of the Smyril Line ferry route to Europe.' },
+          { id: 'puffin-boat',    name: 'Puffin Watching Boat Tour',      rating: 9.1, reviewCount: 890,  pricePerPerson: 65,  duration: '2h',       image: 'https://picsum.photos/seed/puffin-watching/400/280',       description: 'Sail out from Seyðisfjörður harbour to the Atlantic puffin nesting colonies on the sea cliffs. Puffins nest here from May to August and can be photographed at close range from the boat. Binoculars provided.' },
+          { id: 'fjords-drive',   name: 'East Fjords Scenic Drive',       rating: 9.0, reviewCount: 2300, pricePerPerson: 35,  duration: 'Half-day', image: 'https://picsum.photos/seed/east-fjords-drive/400/280',      description: 'Wind along the fjord roads of East Iceland, passing dramatic cliffs, tiny fishing villages, and mirror-calm waters. Multiple photo stops at the most scenic viewpoints. A driver-guide narrates the landscape and local history.' },
+        ],
+      },
+      {
+        dayNumber: 5,
+        date: '2025-06-11',
+        city: 'Mývatn',
+        region: 'North Iceland',
+        accommodations: [
+          { id: 'hotel-laxa',    name: 'Hotel Laxá',          rating: 8.6, reviewCount: 510, pricePerNight: 195, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Lakeside',           image: 'https://picsum.photos/seed/hotel-laxa/400/280' },
+          { id: 'myvatn-gh',     name: 'Mývatn Guesthouse',   rating: 8.2, reviewCount: 890, pricePerNight: 115, category: 'Guesthouse',   checkIn: '14:00', checkOut: '11:00', location: 'Near geothermal fields', image: 'https://picsum.photos/seed/myvatn-guesthouse/400/280' },
+        ],
+        activities: [
+          { id: 'myvatn-baths',    name: 'Mývatn Nature Baths',         rating: 9.2, reviewCount: 6700, pricePerPerson: 55,  duration: '2h',      image: 'https://picsum.photos/seed/myvatn-baths/400/280',    description: 'Bathe in the milky-blue geothermal lagoon heated by volcanic activity beneath the lake. The silica-rich water is known for its skin benefits. Open-air pools with views over the lava fields and steam vents.' },
+          { id: 'dettifoss',       name: 'Dettifoss Waterfall',         rating: 9.4, reviewCount: 4500, pricePerPerson: 25,  duration: '2h',      image: 'https://picsum.photos/seed/dettifoss/400/280',       description: 'Stand at the edge of the most powerful waterfall in Europe — 193 cubic metres of glacial water thundering 45 metres into Jökulságljúfur canyon every second. The spray can be seen from kilometres away and the roar is deafening.' },
+          { id: 'grjótagja-cave',  name: 'Grjótagjá Lava Cave',        rating: 8.8, reviewCount: 3200, pricePerPerson: 20,  duration: '1h',      image: 'https://picsum.photos/seed/grjotagja-cave/400/280',  description: 'Enter a fissure cave carved by lava and gaze at the crystal-clear geothermal pool glowing turquoise in the dark. Made famous by Game of Thrones, the water temperature fluctuates between 43°C and 50°C — too hot to swim, perfect to marvel at.' },
+          { id: 'volcanic-walk',   name: 'Mývatn Volcanic Landscape',  rating: 8.7, reviewCount: 2100, pricePerPerson: 35,  duration: '1.5h',    image: 'https://picsum.photos/seed/myvatn-volcanic/400/280', description: 'Walk through a surreal landscape of pseudocraters, lava pillars, and boiling mud pools with a geologist guide. The Krafla caldera and Víti explosion crater are highlights on this circular route around Lake Mývatn.' },
+        ],
+      },
+      {
+        dayNumber: 6,
+        date: '2025-06-12',
+        city: 'Akureyri',
+        region: 'North Iceland',
+        accommodations: [
+          { id: 'icelandair-akureyri', name: 'Icelandair Hotel Akureyri', rating: 8.5, reviewCount: 1240, pricePerNight: 175, category: '4-star Hotel', checkIn: '15:00', checkOut: '12:00', location: '0.3 km from harbour', image: 'https://picsum.photos/seed/icelandair-akureyri/400/280' },
+          { id: 'akureyri-backpackers',name: 'Akureyri Backpackers',      rating: 8.1, reviewCount: 670,  pricePerNight: 65,  category: 'Hostel',       checkIn: '14:00', checkOut: '11:00', location: 'Town centre',         image: 'https://picsum.photos/seed/akureyri-backpackers/400/280' },
+          { id: 'gula-villan',         name: 'Gula Villan Guesthouse',    rating: 9.0, reviewCount: 340,  pricePerNight: 145, category: 'Guesthouse',   checkIn: '15:00', checkOut: '11:00', location: '1 km from centre',    image: 'https://picsum.photos/seed/gula-villan/400/280' },
+        ],
+        activities: [
+          { id: 'husavik-whale',   name: 'Whale Watching from Húsavík', rating: 9.5, reviewCount: 8900, pricePerPerson: 110, duration: '3h',   image: 'https://picsum.photos/seed/husavik-whale/400/280',    description: 'Húsavík is Iceland\'s whale watching capital. Sail out on a traditional oak schooner or fast RIB boat to spot humpbacks, blue whales, and minke whales in Skjálfandi Bay. One of the highest success rates in Europe, with expert marine biologist guides.' },
+          { id: 'akureyri-garden', name: 'Akureyri Botanical Garden',   rating: 8.4, reviewCount: 1800, pricePerPerson: 10,  duration: '1.5h', image: 'https://picsum.photos/seed/akureyri-garden/400/280',   description: 'Visit one of the world\'s northernmost botanical gardens at 65°N latitude. Over 7,000 plant species from the subarctic and around the world. In summer the garden is in full bloom and the beds are ablaze with colour under the midnight sun.' },
+          { id: 'north-horses',    name: 'North Iceland Horse Riding',  rating: 9.1, reviewCount: 2200, pricePerPerson: 95,  duration: '2h',   image: 'https://picsum.photos/seed/north-horses/400/280',     description: 'Ride through lava fields and along a glacial river on a pure-bred Icelandic horse. Experience the unique tölt gait — smooth enough to carry a glass of beer without spilling. Suitable for all levels including beginners. Helmet and boots provided.' },
+        ],
+      },
+      {
+        dayNumber: 7,
+        date: '2025-06-13',
+        city: 'Reykjavík',
+        region: 'Capital Region',
+        // Last day — no accommodations
+        accommodations: [],
+        activities: [
+          { id: 'food-tour',          name: 'Reykjavík Street Food Tour',       rating: 9.0, reviewCount: 3100, pricePerPerson: 75,  duration: '3h', image: 'https://picsum.photos/seed/reykjavik-food-tour/400/280',  description: 'Taste your way through Reykjavík\'s best food spots — from the famous hot dog stand by the harbour to Icelandic lamb soup, skyr desserts, and fresh langoustine. A local foodie guide leads you through 7–8 tastings across the city centre.' },
+          { id: 'blue-lagoon-prem',   name: 'Blue Lagoon Premium Ticket',       rating: 9.3, reviewCount: 7800, pricePerPerson: 115, duration: '3h', image: 'https://picsum.photos/seed/blue-lagoon-premium/400/280', description: 'The Premium entry includes a sparkling wine welcome drink, a silica mud mask, an algae mask, access to the Lava Restaurant for a meal, and a complimentary Blue Lagoon robe. The ideal farewell experience before flying home from nearby Keflavík.' },
+          { id: 'departure-transfer', name: 'Departure Transfer to Keflavík',   rating: 8.5, reviewCount: 5600, pricePerPerson: 35,  duration: '1h', image: 'https://picsum.photos/seed/keflavik-transfer/400/280',   description: 'Shared comfortable coach transfer from your Reykjavík hotel directly to Keflavík International Airport. Hotel pick-up included. Departs 3 hours before flight time. Luggage storage available at the terminal while you explore the airport.' },
         ],
       },
     ],
   },
 
+  // ── GUIDED, 4 days ──────────────────────────────────────────────────────
   'south-coast': {
     id: 'south-coast',
     title: '4-day Guided South Coast Package',
     image: 'https://picsum.photos/seed/south-coast-iceland/1200/500',
     tourType: 'guided',
-    durationDays: 4,
-    durationNights: 3,
-    season: { startDate: '2025-04-01', endDate: '2025-10-31' },
+    startLocation: 'Reykjavík, Iceland',
+    totalDays: 4,
     priceFrom: 450,
-    highlights: [
-      'Walk behind Seljalandsfoss waterfall',
-      'See the black sand beaches of Reynisfjara',
-      'Guided glacier walk on Sólheimajökull',
-    ],
-    included: ['3 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities'],
+    season: { startDate: '2025-04-01', endDate: '2025-10-31' },
+    description: "Join a small group for a 4-day guided journey along Iceland's iconic south coast. Roaring waterfalls, a glacier tongue, and a haunting black sand beach — with comfortable guesthouse stays each night.",
+    highlights: ['Walk behind Seljalandsfoss waterfall', 'Guided glacier walk on Sólheimajökull', 'Black sand beach at Reynisfjara', 'Small group — max 12 travellers'],
+    included: ['3 nights accommodation', 'Professional guide', 'Minibus transport', 'Glacier walk equipment'],
     extraIncluded: [],
     notIncluded: ['Flights', 'Meals', 'Travel insurance'],
-    bringWithYou: ['Waterproof jacket', 'Hiking boots', 'Warm layers'],
+    bringWithYou: ['Waterproof jacket', 'Hiking boots', 'Warm mid-layer'],
     conditions: {
       cancellation: 'Free cancellation up to 7 days before. No refund within 7 days.',
       importantInfo: 'Moderate fitness required for glacier walk.',
       terms: 'Final payment due 14 days before departure.',
     },
+    travelStyle: ['Nature', 'Comfort'],
+    wayOfTravel: ['Small group'],
+    interests: ['Waterfalls', 'Glaciers', 'Beaches'],
+    regionTags: ['South Iceland'],
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'All transport included. Minibus picks up from Reykjavík hotel each morning.' },
     availabilityLabels: ['Guided'],
-    preferences: {
-      travelStyle: ['Guided', 'Nature'],
-      wayOfTravel: ['Group tour'],
-      interests: ['Waterfalls', 'Glaciers'],
-      regions: ['South Iceland'],
-    },
-    route: {
-      numberOfStays: 3,
-      stops: [
-        { name: 'Reykjavík', nights: 1 },
-        { name: 'South Coast', nights: 2 },
-        { name: 'Reykjavík (return)', nights: 0 },
-      ],
-    },
-    accommodationsByStop: [],
-    transport: { level: 'optional', allowedCarCategories: 'all', note: 'Transport included in guided tour.' },
-    departures: [
-      { date: '2025-05-05', times: ['09:00'] },
-      { date: '2025-06-02', times: ['09:00'] },
-      { date: '2025-07-07', times: ['09:00'] },
-    ],
-    itinerary: [
-      { dayNumber: 1, title: 'Reykjavík & Departure', description: 'Meet your guide and head south.', activities: [], overnightStop: 'Reykjavík' },
-      { dayNumber: 2, title: 'Waterfalls', description: 'Seljalandsfoss and Skógafoss.', activities: [], overnightStop: 'South Coast' },
-      { dayNumber: 3, title: 'Glacier & Beach', description: 'Glacier walk and Reynisfjara.', activities: [], overnightStop: 'South Coast' },
-      { dayNumber: 4, title: 'Return', description: 'Drive back to Reykjavík.', activities: [], overnightStop: null },
-    ],
-    media: { images: [
-      'https://picsum.photos/seed/sc-waterfall/600/400',
-      'https://picsum.photos/seed/sc-glacier/600/400',
-      'https://picsum.photos/seed/sc-beach/600/400',
-      'https://picsum.photos/seed/sc-coast/600/400',
-    ] },
+    media: { images: ['https://picsum.photos/seed/sc-waterfall/600/400', 'https://picsum.photos/seed/sc-glacier/600/400', 'https://picsum.photos/seed/sc-beach/600/400'] },
     extrasByCategory: [],
+    days: [
+      {
+        dayNumber: 1,
+        date: '2025-05-05',
+        city: 'Reykjavík',
+        region: 'Capital Region',
+        accommodations: [
+          { id: 'rk-lights-sc', name: 'Reykjavík Lights Hotel', rating: 8.8, reviewCount: 1258, pricePerNight: 145, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: '0.4 km from centre', image: 'https://picsum.photos/seed/reykjavik-lights/400/280' },
+          { id: 'fosshotel-sc',  name: 'Fosshotel Reykjavík',   rating: 8.5, reviewCount: 940,  pricePerNight: 165, category: '4-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Harbour area',       image: 'https://picsum.photos/seed/fosshotel-rvk/400/280' },
+        ],
+        activities: [
+          { id: 'rvk-walk-sc',  name: 'Reykjavík City Walking Tour', rating: 8.7, reviewCount: 2800, pricePerPerson: 35, duration: '2h', image: 'https://picsum.photos/seed/reykjavik-city-walk/400/280' },
+          { id: 'harpa-tour',   name: 'Harpa Concert Hall Tour',     rating: 8.5, reviewCount: 1600, pricePerPerson: 20, duration: '1h', image: 'https://picsum.photos/seed/harpa-concert/400/280' },
+        ],
+      },
+      {
+        dayNumber: 2,
+        date: '2025-05-06',
+        city: 'Hella',
+        region: 'South Iceland',
+        accommodations: [
+          { id: 'hella-hotel', name: 'Hella Country Hotel', rating: 8.3, reviewCount: 720, pricePerNight: 130, category: 'Country Hotel', checkIn: '14:00', checkOut: '11:00', location: 'Rural South Iceland', image: 'https://picsum.photos/seed/hella-hotel/400/280' },
+        ],
+        activities: [
+          { id: 'seljalandsfoss-sc', name: 'Seljalandsfoss Waterfall',  rating: 9.1, reviewCount: 7200, pricePerPerson: 25, duration: '1h',   image: 'https://picsum.photos/seed/seljalandsfoss/400/280' },
+          { id: 'skogafoss-sc',      name: 'Skógafoss Waterfall',       rating: 9.0, reviewCount: 6800, pricePerPerson: 20, duration: '1h',   image: 'https://picsum.photos/seed/skogafoss/400/280' },
+          { id: 'secret-lagoon',     name: 'Secret Lagoon Hot Spring',  rating: 8.9, reviewCount: 4100, pricePerPerson: 30, duration: '2h',   image: 'https://picsum.photos/seed/secret-lagoon/400/280' },
+        ],
+      },
+      {
+        dayNumber: 3,
+        date: '2025-05-07',
+        city: 'Vík',
+        region: 'South Iceland',
+        accommodations: [
+          { id: 'vik-gh-sc',      name: 'Vík Guesthouse',        rating: 8.4, reviewCount: 890,  pricePerNight: 120, category: 'Guesthouse',  checkIn: '14:00', checkOut: '11:00', location: '0.3 km from beach', image: 'https://picsum.photos/seed/vik-guesthouse/400/280' },
+          { id: 'icelandair-vik-sc', name: 'Icelandair Hotel Vík', rating: 8.9, reviewCount: 1560, pricePerNight: 185, category: '4-star Hotel', checkIn: '15:00', checkOut: '12:00', location: '1 km from centre', image: 'https://picsum.photos/seed/icelandair-vik/400/280' },
+        ],
+        activities: [
+          { id: 'glacier-hike-sc', name: 'Glacier Hike on Sólheimajökull', rating: 9.2, reviewCount: 3400, pricePerPerson: 89, duration: '3h',   image: 'https://picsum.photos/seed/solheimajokull/400/280' },
+          { id: 'reynisfjara-sc',  name: 'Reynisfjara Black Sand Beach',    rating: 9.3, reviewCount: 8900, pricePerPerson: 15, duration: '1.5h', image: 'https://picsum.photos/seed/reynisfjara/400/280' },
+          { id: 'horse-riding',    name: 'Icelandic Horse Riding',          rating: 9.0, reviewCount: 2600, pricePerPerson: 75, duration: '2h',   image: 'https://picsum.photos/seed/horse-riding/400/280' },
+        ],
+      },
+      {
+        dayNumber: 4,
+        date: '2025-05-08',
+        city: 'Reykjavík',
+        region: 'Capital Region',
+        accommodations: [],  // Last day — no accommodation
+        activities: [
+          { id: 'skalholtkjord',  name: 'Skálholt Cathedral Visit',       rating: 8.4, reviewCount: 980,  pricePerPerson: 15, duration: '1h', image: 'https://picsum.photos/seed/skalholtkjord/400/280' },
+          { id: 'departure-sc',   name: 'Reykjavík Departure Transfer',   rating: 8.5, reviewCount: 2300, pricePerPerson: 30, duration: '1h', image: 'https://picsum.photos/seed/rvk-departure/400/280' },
+        ],
+      },
+    ],
   },
 
+  // ── Minimal stubs ─────────────────────────────────────────────────────────
   'golden-circle': {
     id: 'golden-circle',
     title: '5-day Golden Circle Adventure',
     image: 'https://picsum.photos/seed/golden-circle-tour/1200/500',
     tourType: 'guided',
-    durationDays: 5,
-    durationNights: 4,
-    season: { startDate: '2025-03-01', endDate: '2025-11-30' },
+    startLocation: 'Reykjavík, Iceland',
+    totalDays: 5,
     priceFrom: 520,
-    highlights: [
-      'Geysir erupts every 5–8 minutes — catch it perfectly',
-      'Stand at the rift between the Eurasian and North American plates',
-      'Bathe in the Secret Lagoon geothermal pool',
-    ],
-    included: ['4 nights accommodation', 'All transportation', 'Professional guide', 'Some meals'],
+    season: { startDate: '2025-03-01', endDate: '2025-11-30' },
+    description: 'Geysers, waterfalls, and hot springs on the classic Golden Circle route.',
+    highlights: ['Geysir erupts every 5–8 minutes', 'Þingvellir UNESCO World Heritage Site'],
+    included: ['4 nights accommodation', 'All transportation', 'Professional guide'],
     extraIncluded: [],
     notIncluded: ['Flights', 'Travel insurance'],
-    bringWithYou: ['Warm layers', 'Camera', 'Swimwear'],
-    conditions: {
-      cancellation: 'Free cancellation up to 10 days before.',
-      importantInfo: 'Suitable for all fitness levels.',
-      terms: 'Prices based on double occupancy.',
-    },
-    availabilityLabels: ['Guided', 'Private'],
-    preferences: {
-      travelStyle: ['Guided', 'Comfort'],
-      wayOfTravel: ['Group tour'],
-      interests: ['Geysers', 'Hot Springs', 'History'],
-      regions: ['South Iceland', 'West Iceland'],
-    },
-    route: {
-      numberOfStays: 4,
-      stops: [
-        { name: 'Reykjavík', nights: 2 },
-        { name: 'Golden Circle area', nights: 2 },
-        { name: 'Reykjavík (return)', nights: 0 },
-      ],
-    },
-    accommodationsByStop: [],
-    transport: { level: 'optional', allowedCarCategories: 'all', note: 'Minibus transport included.' },
-    departures: [
-      { date: '2025-04-14', times: ['09:00'] },
-      { date: '2025-05-12', times: ['09:00'] },
-    ],
-    itinerary: [
-      { dayNumber: 1, title: 'Arrival', description: 'Check in and orientation.', activities: [], overnightStop: 'Reykjavík' },
-      { dayNumber: 2, title: 'Þingvellir', description: 'UNESCO World Heritage site.', activities: [], overnightStop: 'Reykjavík' },
-      { dayNumber: 3, title: 'Geysir & Gullfoss', description: 'The geothermal wonders.', activities: [], overnightStop: 'Golden Circle area' },
-      { dayNumber: 4, title: 'Secret Lagoon', description: 'Relax in geothermal waters.', activities: [], overnightStop: 'Golden Circle area' },
-      { dayNumber: 5, title: 'Return', description: 'Back to Reykjavík.', activities: [], overnightStop: null },
-    ],
-    media: { images: [
-      'https://picsum.photos/seed/gc-geyser/600/400',
-      'https://picsum.photos/seed/gc-waterfall/600/400',
-      'https://picsum.photos/seed/gc-lagoon/600/400',
-      'https://picsum.photos/seed/gc-mountain/600/400',
-    ] },
+    bringWithYou: ['Warm layers', 'Camera'],
+    conditions: { cancellation: 'Free cancellation up to 10 days before.', importantInfo: 'Suitable for all fitness levels.', terms: '' },
+    travelStyle: ['Comfort'], wayOfTravel: ['Small group'], interests: ['Geysers', 'Hot Springs'], regionTags: ['South Iceland'],
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Minibus transport included.' },
+    availabilityLabels: ['Guided'],
+    media: { images: ['https://picsum.photos/seed/gc-geyser/600/400'] },
     extrasByCategory: [],
+    days: [
+      { dayNumber: 1, date: '2025-04-14', city: 'Reykjavík', region: 'Capital Region',
+        accommodations: [
+          { id: 'rk-lights-gc',    name: 'Reykjavík Lights Hotel',   rating: 8.8, reviewCount: 1258, pricePerNight: 145, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'City centre',       image: 'https://picsum.photos/seed/reykjavik-lights/400/280' },
+          { id: 'kex-gc',          name: 'KEX Hostel',                rating: 8.6, reviewCount: 2613, pricePerNight: 89,  category: 'Hostel',       checkIn: '15:00', checkOut: '11:00', location: '1 km from centre',  image: 'https://picsum.photos/seed/kex-hostel/400/280' },
+          { id: 'tingholt-gc',     name: 'CenterHotel Þingholt',     rating: 9.0, reviewCount: 876,  pricePerNight: 210, category: '4-star Hotel', checkIn: '16:00', checkOut: '12:00', location: 'Old town',          image: 'https://picsum.photos/seed/tingholt-hotel/400/280' },
+        ],
+        activities: [
+          { id: 'rvk-walk-gc',     name: 'Reykjavík Welcome Walk',   rating: 8.6, reviewCount: 1900, pricePerPerson: 25,  duration: '1.5h', image: 'https://picsum.photos/seed/reykjavik-welcome/400/280',   description: 'A relaxed 1.5-hour orientation walk through the heart of Reykjavík with a local guide. Cover the main landmarks: Hallgrímskirkja, Tjörnin lake, the parliament, and the old harbour. Perfect for first-time visitors.' },
+          { id: 'hallg-gc',        name: 'Hallgrímskirkja Tower',    rating: 8.5, reviewCount: 3200, pricePerPerson: 18,  duration: '1h',   image: 'https://picsum.photos/seed/hallgrimskirkja/400/280',     description: 'Ride the lift to the 74-metre tower of Iceland\'s most iconic church for sweeping 360° views across the city and out to sea.' },
+          { id: 'blue-lagoon-gc',  name: 'Blue Lagoon Day Trip',     rating: 9.0, reviewCount: 4500, pricePerPerson: 65,  duration: '4h',   image: 'https://picsum.photos/seed/blue-lagoon-day/400/280',     description: 'Soak in the world-famous geothermal lagoon 45 minutes from Reykjavík. The milky-blue water is rich in silica and minerals. Comfort entry includes silica mud mask and algae mask.' },
+        ] },
+      { dayNumber: 2, date: '2025-04-15', city: 'Þingvellir', region: 'South Iceland',
+        accommodations: [
+          { id: 'thing-cabins',    name: 'Þingvellir Cabins',        rating: 8.3, reviewCount: 450,  pricePerNight: 135, category: 'Cabin',        checkIn: '14:00', checkOut: '11:00', location: 'Park edge',         image: 'https://picsum.photos/seed/thingvellir-cabins/400/280' },
+          { id: 'ion-hotel',       name: 'ION Adventure Hotel',      rating: 9.1, reviewCount: 620,  pricePerNight: 295, category: 'Design Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Þingvellir lava',   image: 'https://picsum.photos/seed/ion-adventure-hotel/400/280' },
+        ],
+        activities: [
+          { id: 'thingvellir',     name: 'Þingvellir National Park', rating: 9.0, reviewCount: 6200, pricePerPerson: 20,  duration: '2h',   image: 'https://picsum.photos/seed/thingvellir/400/280',         description: 'Walk the rift valley where the Eurasian and North American tectonic plates meet. Site of the world\'s oldest parliament (930 AD) and a UNESCO World Heritage Site.' },
+          { id: 'silfra-snorkel', name: 'Snorkelling in Silfra',    rating: 9.5, reviewCount: 2800, pricePerPerson: 120, duration: '3h',   image: 'https://picsum.photos/seed/silfra-snorkel/400/280',      description: 'Float between two tectonic plates in crystal-clear glacier meltwater with visibility over 100 metres. The water is 2–4°C — dry suits and all equipment provided. Minimum age 18, no diving experience required.' },
+          { id: 'haifoss-hike',    name: 'Háifoss Waterfall Hike',  rating: 8.8, reviewCount: 1200, pricePerPerson: 30,  duration: '2.5h', image: 'https://picsum.photos/seed/haifoss-waterfall/400/280',   description: 'Hike to the edge of the canyon and look down on Háifoss, one of Iceland\'s tallest waterfalls at 122 metres. A moderate trail through lava fields with stunning views over the Þjórsá river valley.' },
+        ] },
+      { dayNumber: 3, date: '2025-04-16', city: 'Golden Circle', region: 'South Iceland',
+        accommodations: [
+          { id: 'gc-hotel',        name: 'Golden Circle Hotel',      rating: 8.5, reviewCount: 710,  pricePerNight: 150, category: 'Hotel',        checkIn: '15:00', checkOut: '11:00', location: 'Rural area',        image: 'https://picsum.photos/seed/gc-hotel/400/280' },
+          { id: 'hestasport-gc',   name: 'Hestasport Farm Hotel',    rating: 8.4, reviewCount: 390,  pricePerNight: 125, category: 'Farm Hotel',   checkIn: '14:00', checkOut: '11:00', location: 'Horse farm',        image: 'https://picsum.photos/seed/hestasport-farm/400/280' },
+        ],
+        activities: [
+          { id: 'geysir-gc',       name: 'Geysir Geothermal Area',  rating: 9.2, reviewCount: 8100, pricePerPerson: 0,   duration: '1.5h', image: 'https://picsum.photos/seed/geysir-area/400/280',         description: 'Watch Strokkur geyser erupt up to 40 metres every 5–8 minutes. The surrounding geothermal field has boiling mud pools, fumaroles, and vivid mineral deposits to explore.' },
+          { id: 'gullfoss-gc',     name: 'Gullfoss Waterfall',      rating: 9.1, reviewCount: 7400, pricePerPerson: 0,   duration: '1h',   image: 'https://picsum.photos/seed/gullfoss/400/280',            description: 'Stand at the edge of the "Golden Falls" — a double-tier cascade plunging 32 metres into a kilometre-long gorge. On sunny days a rainbow hovers permanently in the spray.' },
+          { id: 'atv-gc',          name: 'ATV Quad Bike Adventure', rating: 9.0, reviewCount: 1650, pricePerPerson: 85,  duration: '2h',   image: 'https://picsum.photos/seed/atv-quad-iceland/400/280',   description: 'Ride quad bikes through lava fields and river plains near the Golden Circle with a guide. No licence required. Helmets, goggles, and overalls provided.' },
+          { id: 'kerid-gc',        name: 'Kerið Volcano Crater',    rating: 8.7, reviewCount: 3900, pricePerPerson: 8,   duration: '45min',image: 'https://picsum.photos/seed/kerid-crater/400/280',        description: 'Walk the rim of a 3,000-year-old volcanic crater lake. The vivid red scoria walls contrast with the teal water below. A short but striking stop on the Golden Circle route.' },
+        ] },
+      { dayNumber: 4, date: '2025-04-17', city: 'Flúðir', region: 'South Iceland',
+        accommodations: [
+          { id: 'fludir-gh',       name: 'Flúðir Guesthouse',       rating: 8.1, reviewCount: 380,  pricePerNight: 110, category: 'Guesthouse',   checkIn: '14:00', checkOut: '11:00', location: 'Village centre',    image: 'https://picsum.photos/seed/fludir-gh/400/280' },
+          { id: 'hotel-selfoss',   name: 'Hotel Selfoss',            rating: 8.6, reviewCount: 820,  pricePerNight: 155, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Selfoss riverside',  image: 'https://picsum.photos/seed/hotel-selfoss/400/280' },
+        ],
+        activities: [
+          { id: 'secret-lagoon-gc',name: 'Secret Lagoon',           rating: 8.9, reviewCount: 4100, pricePerPerson: 30,  duration: '2h',   image: 'https://picsum.photos/seed/secret-lagoon/400/280',       description: 'Soak in Iceland\'s oldest swimming pool (1891), a naturally heated geothermal pool surrounded by erupting mini geysers and lava fields. A quieter, more authentic alternative to the Blue Lagoon.' },
+          { id: 'horse-gc',        name: 'Icelandic Horse Riding',  rating: 9.0, reviewCount: 2600, pricePerPerson: 75,  duration: '2h',   image: 'https://picsum.photos/seed/horse-riding/400/280',        description: 'Ride through lava fields and river valleys on a pure-bred Icelandic horse. Experience the famous tölt gait. Suitable for all levels including beginners. Helmet and boots provided.' },
+          { id: 'fridheimar-gc',   name: 'Friðheimar Greenhouse',   rating: 9.1, reviewCount: 2100, pricePerPerson: 45,  duration: '1.5h', image: 'https://picsum.photos/seed/fridheimar-greenhouse/400/280',description: 'Tour a geothermal greenhouse where tomatoes grow year-round under the midnight sun, then dine at the famous tomato soup restaurant inside. A unique and delicious farm-to-table experience.' },
+        ] },
+      { dayNumber: 5, date: '2025-04-18', city: 'Reykjavík', region: 'Capital Region', accommodations: [],
+        activities: [
+          { id: 'rvk-departure-gc',name: 'Reykjavík Departure Transfer', rating: 8.5, reviewCount: 1200, pricePerPerson: 30, duration: '1h', image: 'https://picsum.photos/seed/rvk-departure/400/280', description: 'Comfortable shared transfer from your Reykjavík hotel to Keflavík International Airport. Luggage assistance included.' },
+          { id: 'laugavegur-gc',   name: 'Laugavegur Shopping Walk', rating: 8.3, reviewCount: 1800, pricePerPerson: 0,  duration: '2h', image: 'https://picsum.photos/seed/laugavegur-shopping/400/280', description: 'Use your final morning to stroll Laugavegur, Reykjavík\'s famous main shopping street. Browse Icelandic wool jumpers, design boutiques, and street-food stalls before heading to the airport.' },
+        ] },
+    ],
   },
 
   'northern-lights': {
@@ -378,58 +358,50 @@ const TOUR_DATA = {
     title: '3-day Northern Lights Package',
     image: 'https://picsum.photos/seed/northern-lights-iceland/1200/500',
     tourType: 'guided',
-    durationDays: 3,
-    durationNights: 2,
-    season: { startDate: '2025-09-15', endDate: '2026-03-31' },
+    startLocation: 'Reykjavík, Iceland',
+    totalDays: 3,
     priceFrom: 380,
-    highlights: [
-      'Expert guides take you to the darkest aurora-viewing spots',
-      'Explore an ice cave inside a glacier',
-      'Small group — maximum 12 people',
-    ],
-    included: ['2 nights accommodation', 'All transportation', 'Professional guide', 'Ice cave tour'],
+    season: { startDate: '2025-09-15', endDate: '2026-03-31' },
+    description: "Chase the aurora borealis with expert guides, then explore an ice cave inside Vatnajökull glacier.",
+    highlights: ['Expert guides find the darkest aurora spots', 'Ice cave inside Vatnajökull', 'Small group — max 12'],
+    included: ['2 nights accommodation', 'All transportation', 'Professional guide'],
     extraIncluded: [],
     notIncluded: ['Flights', 'Meals', 'Travel insurance'],
-    bringWithYou: ['Very warm jacket', 'Thermals', 'Gloves & hat', 'Camera with manual mode'],
-    conditions: {
-      cancellation: 'Aurora sightings cannot be guaranteed. No refund for weather-related issues.',
-      importantInfo: 'Ice cave tours depend on glacier safety conditions.',
-      terms: 'Winter tour — temperatures can drop to −15°C.',
-    },
+    bringWithYou: ['Very warm jacket', 'Thermals', 'Gloves & hat'],
+    conditions: { cancellation: 'Aurora sightings not guaranteed. No refund for weather issues.', importantInfo: 'Ice cave tours depend on glacier safety.', terms: '' },
+    travelStyle: ['Adventure'], wayOfTravel: ['Small group'], interests: ['Northern Lights', 'Ice Caves'], regionTags: ['South Iceland'],
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Super jeep transport included.' },
     availabilityLabels: ['Guided'],
-    preferences: {
-      travelStyle: ['Winter', 'Adventure'],
-      wayOfTravel: ['Small group'],
-      interests: ['Northern Lights', 'Ice Caves', 'Photography'],
-      regions: ['South Iceland'],
-    },
-    route: {
-      numberOfStays: 2,
-      stops: [
-        { name: 'Reykjavík', nights: 1 },
-        { name: 'South Iceland', nights: 1 },
-        { name: 'Reykjavík (return)', nights: 0 },
-      ],
-    },
-    accommodationsByStop: [],
-    transport: { level: 'optional', allowedCarCategories: 'all', note: 'Super jeep transport included.' },
-    departures: [
-      { date: '2025-10-04', times: ['18:00'] },
-      { date: '2025-11-01', times: ['17:00'] },
-      { date: '2025-12-06', times: ['16:00'] },
-    ],
-    itinerary: [
-      { dayNumber: 1, title: 'Arrival & Aurora Hunt', description: 'Arrive and hunt for the northern lights.', activities: [], overnightStop: 'Reykjavík' },
-      { dayNumber: 2, title: 'Ice Cave & Glacier', description: 'Explore Vatnajökull ice cave.', activities: [], overnightStop: 'South Iceland' },
-      { dayNumber: 3, title: 'Return', description: 'Return to Reykjavík.', activities: [], overnightStop: null },
-    ],
-    media: { images: [
-      'https://picsum.photos/seed/nl-aurora/600/400',
-      'https://picsum.photos/seed/nl-icecave/600/400',
-      'https://picsum.photos/seed/nl-glacier/600/400',
-      'https://picsum.photos/seed/nl-winter/600/400',
-    ] },
+    media: { images: ['https://picsum.photos/seed/nl-aurora/600/400', 'https://picsum.photos/seed/nl-icecave/600/400'] },
     extrasByCategory: [],
+    days: [
+      { dayNumber: 1, date: '2025-10-04', city: 'Reykjavík', region: 'Capital Region',
+        accommodations: [
+          { id: 'rk-lights-nl',  name: 'Reykjavík Lights Hotel',  rating: 8.8, reviewCount: 1258, pricePerNight: 145, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'City centre',      image: 'https://picsum.photos/seed/reykjavik-lights/400/280' },
+          { id: 'storm-hotel-nl',name: 'Storm Hotel',              rating: 8.9, reviewCount: 740,  pricePerNight: 185, category: '4-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Laugavegur',       image: 'https://picsum.photos/seed/storm-hotel-rvk/400/280' },
+          { id: 'kex-nl',        name: 'KEX Hostel',               rating: 8.6, reviewCount: 2613, pricePerNight: 89,  category: 'Hostel',       checkIn: '15:00', checkOut: '11:00', location: '1 km from centre', image: 'https://picsum.photos/seed/kex-hostel/400/280' },
+        ],
+        activities: [
+          { id: 'aurora-hunt',   name: 'Evening Aurora Hunt',      rating: 9.0, reviewCount: 3400, pricePerPerson: 65,  duration: '3h',   image: 'https://picsum.photos/seed/aurora-hunt/400/280',          description: 'Small-group minibus tour venturing beyond the city light pollution to find the northern lights. Expert guides use live cloud forecasts and solar activity data to find the best spot. Photography tips included.' },
+          { id: 'perlan-nl',     name: 'Perlan Museum',            rating: 8.8, reviewCount: 5200, pricePerPerson: 35,  duration: '2h',   image: 'https://picsum.photos/seed/perlan-museum/400/280',        description: 'Explore Iceland\'s most impressive museum, built on top of six geothermal hot water tanks. The aurora exhibition, real indoor ice cave, and panoramic viewing deck are unmissable. Catch the sunset from the glass dome.' },
+          { id: 'aurora-photo',  name: 'Aurora Photography Workshop', rating: 9.1, reviewCount: 1800, pricePerPerson: 95, duration: '4h', image: 'https://picsum.photos/seed/aurora-photography/400/280',  description: 'Learn long-exposure night photography techniques from a professional photographer while chasing the northern lights. Tripod use, camera settings, and post-processing basics covered. All skill levels welcome.' },
+        ] },
+      { dayNumber: 2, date: '2025-10-05', city: 'Jökulsárlón', region: 'South Iceland',
+        accommodations: [
+          { id: 'south-gh-nl',   name: 'South Iceland Guesthouse',rating: 8.0, reviewCount: 560,  pricePerNight: 110, category: 'Guesthouse',   checkIn: '14:00', checkOut: '11:00', location: 'Rural area',       image: 'https://picsum.photos/seed/south-gh/400/280' },
+          { id: 'fossil-gl-nl',  name: 'Fosshotel Glacier Lagoon', rating: 8.8, reviewCount: 890,  pricePerNight: 220, category: '3-star Hotel', checkIn: '15:00', checkOut: '12:00', location: 'Near lagoon',      image: 'https://picsum.photos/seed/fosshotel-lagoon/400/280' },
+        ],
+        activities: [
+          { id: 'ice-cave-nl',   name: 'Vatnajökull Ice Cave',     rating: 9.4, reviewCount: 4800, pricePerPerson: 95,  duration: '2h',   image: 'https://picsum.photos/seed/ice-cave/400/280',             description: 'Enter a natural ice cave beneath Europe\'s largest glacier. The ceiling glows electric blue as light filters through ancient compressed ice. Your certified guide explains the glacial geology. Crampons and helmets provided.' },
+          { id: 'lagoon-nl',     name: 'Jökulsárlón Glacier Lagoon',rating: 9.2, reviewCount: 5600, pricePerPerson: 12, duration: '1h',   image: 'https://picsum.photos/seed/jokulsarlon-lagoon/400/280',   description: 'Walk the edge of the glacial lagoon and watch enormous icebergs slowly drift past, calved from the Breiðamerkurjökull glacier. Seals often laze on the ice floes.' },
+          { id: 'superjeep-nl',  name: 'Super Jeep Highland Tour', rating: 9.3, reviewCount: 1400, pricePerPerson: 130, duration: '4h',   image: 'https://picsum.photos/seed/superjeep-highland/400/280',  description: 'Venture deep into the volcanic highlands on a custom super jeep with massive suspension. Cross glacial rivers, explore lava fields, and reach landscapes no normal vehicle can access.' },
+        ] },
+      { dayNumber: 3, date: '2025-10-06', city: 'Reykjavík', region: 'Capital Region', accommodations: [],
+        activities: [
+          { id: 'nl-departure',  name: 'Reykjavík Departure Transfer', rating: 8.5, reviewCount: 1200, pricePerPerson: 30, duration: '1h', image: 'https://picsum.photos/seed/rvk-departure/400/280', description: 'Comfortable shared transfer from your Reykjavík hotel to Keflavík International Airport. Luggage assistance included.' },
+          { id: 'rvk-flea-nl',   name: 'Kolaportið Flea Market',  rating: 8.0, reviewCount: 2100, pricePerPerson: 0,   duration: '1.5h', image: 'https://picsum.photos/seed/kolaportid-market/400/280',   description: 'Browse Reykjavík\'s famous weekend flea market at the old harbour. Pick up Icelandic wool goods, vintage clothes, local snacks, and quirky souvenirs before heading to the airport.' },
+        ] },
+    ],
   },
 };
 
@@ -441,17 +413,11 @@ function ShowMore({ items, limit = 6, renderItem }) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, limit);
   const hidden = items.length - limit;
-
   return (
     <div>
-      <ul className="space-y-2">
-        {visible.map((item, i) => renderItem(item, i))}
-      </ul>
+      <ul className="space-y-2">{visible.map((item, i) => renderItem(item, i))}</ul>
       {items.length > limit && (
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium"
-        >
+        <button onClick={() => setExpanded(!expanded)} className="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium">
           {expanded ? 'Show less ▲' : `Show ${hidden} more ▼`}
         </button>
       )}
@@ -463,10 +429,7 @@ function Accordion({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-gray-200 last:border-b-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-4 text-left font-medium text-gray-900 hover:text-blue-600"
-      >
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-4 text-left font-medium text-gray-900 hover:text-blue-600">
         <span>{title}</span>
         <span className="text-gray-400 text-sm ml-4">{open ? '▲' : '▼'}</span>
       </button>
@@ -476,33 +439,30 @@ function Accordion({ title, children, defaultOpen = false }) {
 }
 
 // ============================================================================
-// 1. HERO
+// HERO
 // ============================================================================
 
 function TourHero({ tour }) {
   const isGuided = tour.tourType === 'guided';
-
+  const nights = tour.totalDays - 1;
   const formatDate = (d) => {
     if (!d) return '';
     const [, m, day] = d.split('-');
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[parseInt(m,10)-1]} ${parseInt(day,10)}`;
+    return `${months[parseInt(m, 10) - 1]} ${parseInt(day, 10)}`;
   };
-
   return (
     <div>
-      {/* Cover */}
       <div className="w-full h-64 rounded-lg overflow-hidden">
         <img src={tour.image} alt={tour.title} className="w-full h-full object-cover" />
       </div>
-
       <div className="mt-6">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${isGuided ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
             {isGuided ? 'Guided tour' : 'Self-drive'}
           </span>
           <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-            {tour.durationDays} days / {tour.durationNights} nights
+            {tour.totalDays} days / {nights} nights
           </span>
           {tour.season && (
             <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
@@ -521,405 +481,91 @@ function TourHero({ tour }) {
 }
 
 // ============================================================================
-// 2. KEY INFO BLOCKS
+// TOUR BASICS
 // ============================================================================
 
-function TourKeyInfo({ tour }) {
-  const cards = [];
-
-  if (tour.included?.length) {
-    cards.push(
-      <div key="included" className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="text-green-600 font-semibold mb-2">✓ What's included</div>
-        <ul className="space-y-1 text-sm text-gray-700">
-          {tour.included.slice(0, 3).map((item, i) => <li key={i}>• {item}</li>)}
-          {tour.included.length > 3 && <li className="text-gray-400">+ {tour.included.length - 3} more…</li>}
-        </ul>
-      </div>
-    );
-  }
-
-  if (tour.notIncluded?.length) {
-    cards.push(
-      <div key="not-included" className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="text-red-500 font-semibold mb-2">✗ Not included</div>
-        <ul className="space-y-1 text-sm text-gray-700">
-          {tour.notIncluded.slice(0, 3).map((item, i) => <li key={i}>• {item}</li>)}
-          {tour.notIncluded.length > 3 && <li className="text-gray-400">+ {tour.notIncluded.length - 3} more…</li>}
-        </ul>
-      </div>
-    );
-  }
-
-  if (tour.bringWithYou?.length) {
-    cards.push(
-      <div key="bring" className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="text-gray-700 font-semibold mb-2">🎒 Bring with you</div>
-        <ul className="space-y-1 text-sm text-gray-700">
-          {tour.bringWithYou.slice(0, 3).map((item, i) => <li key={i}>• {item}</li>)}
-          {tour.bringWithYou.length > 3 && <li className="text-gray-400">+ {tour.bringWithYou.length - 3} more…</li>}
-        </ul>
-      </div>
-    );
-  }
-
-  if (tour.conditions?.cancellation) {
-    cards.push(
-      <div key="cancel" className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="text-gray-700 font-semibold mb-2">🕐 Cancellation</div>
-        <p className="text-sm text-gray-700">{tour.conditions.cancellation.split('.')[0]}.</p>
-      </div>
-    );
-  }
-
-  if (tour.availabilityLabels?.length) {
-    cards.push(
-      <div key="avail" className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="text-gray-700 font-semibold mb-2">📋 Available as</div>
-        <div className="flex flex-wrap gap-1">
-          {tour.availabilityLabels.map((label, i) => (
-            <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{label}</span>
-          ))}
+function TourBasics({ tour }) {
+  const { tourType, startLocation, totalDays, description, included = [], extraIncluded = [],
+    travelStyle = [], wayOfTravel = [], interests = [], regionTags = [] } = tour;
+  const prefGroups = [
+    { label: 'Travel Style',  items: travelStyle,  color: 'bg-blue-100 text-blue-700' },
+    { label: 'Way of Travel', items: wayOfTravel,  color: 'bg-purple-100 text-purple-700' },
+    { label: 'Interests',     items: interests,    color: 'bg-green-100 text-green-700' },
+    { label: 'Regions',       items: regionTags,   color: 'bg-orange-100 text-orange-700' },
+  ].filter((g) => g.items.length > 0);
+  if (!tourType) return null;
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Description</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 text-sm">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-500 w-32 shrink-0">Tour type</span>
+          <span className={`px-3 py-1 rounded-full font-medium ${tourType === 'guided' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+            {tourType === 'guided' ? 'Guided' : 'Self-drive'}
+          </span>
         </div>
-      </div>
-    );
-  }
-
-  if (!cards.length) return null;
-
-  return (
-    <section className="mt-10">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 3. HIGHLIGHTS
-// ============================================================================
-
-function TourHighlights({ highlights }) {
-  if (!highlights?.length) return null;
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Highlights</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {highlights.map((item, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 flex items-start gap-3">
-            <span className="text-yellow-400 text-lg shrink-0">★</span>
-            <p className="text-sm text-gray-800">{item}</p>
+        {tourType === 'guided' && startLocation && (
+          <div className="flex items-center gap-3">
+            <span className="text-gray-500 w-32 shrink-0">Departs from</span>
+            <span className="font-medium text-gray-900">{startLocation}</span>
           </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 4. INCLUSIONS
-// ============================================================================
-
-function TourInclusions({ included, extraIncluded, notIncluded }) {
-  const hasAny = included?.length || extraIncluded?.length || notIncluded?.length;
-  if (!hasAny) return null;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Included & Not Included</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Included */}
-        {(included?.length || extraIncluded?.length) ? (
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3 text-green-700">What's included</h3>
-            {included?.length ? (
-              <ShowMore
-                items={included}
-                limit={6}
-                renderItem={(item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-green-600 shrink-0 mt-0.5">✓</span>
-                    {item}
-                  </li>
-                )}
-              />
-            ) : null}
-            {extraIncluded?.length ? (
-              <div className="mt-4 pl-4 border-l-2 border-dashed border-green-200">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Also included</p>
-                <ul className="space-y-2">
-                  {extraIncluded.map((item, i) => (
+        )}
+        {tourType === 'self_drive' && (
+          <div className="bg-blue-50 border border-blue-100 rounded p-3 text-blue-800">
+            Self-drive tour — you make your own way to the first location and follow the provided route book at your own pace.
+          </div>
+        )}
+        {totalDays && (
+          <div className="flex items-center gap-3">
+            <span className="text-gray-500 w-32 shrink-0">Duration</span>
+            <span className="font-medium text-gray-900">{totalDays} days / {totalDays - 1} nights</span>
+          </div>
+        )}
+        {description && <p className="text-gray-600 pt-2 border-t border-gray-100 leading-relaxed">{description}</p>}
+        {(included.length > 0 || prefGroups.length > 0) && (
+          <div className="pt-3 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Included */}
+            {included.length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-900 mb-2 text-sm">Included</p>
+                <ul className="space-y-1">
+                  {included.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-green-500 shrink-0 mt-0.5">✓</span>
-                      {item}
+                      <span className="text-green-600 font-bold mt-0.5 shrink-0">✓</span>{item}
                     </li>
                   ))}
                 </ul>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Not Included */}
-        {notIncluded?.length ? (
-          <div>
-            <h3 className="font-semibold text-red-600 mb-3">Not included</h3>
-            <ShowMore
-              items={notIncluded}
-              limit={6}
-              renderItem={(item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="text-red-400 shrink-0 mt-0.5">✗</span>
-                  {item}
-                </li>
-              )}
-            />
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 5. BRING WITH YOU
-// ============================================================================
-
-function TourBringWithYou({ items }) {
-  if (!items?.length) return null;
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">What to Bring</h2>
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {items.map((item, i) => (
-            <li key={i} className="flex items-center gap-3 text-sm text-gray-700">
-              <span className="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center shrink-0 text-xs text-gray-400">✓</span>
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 6. CONDITIONS
-// ============================================================================
-
-function TourConditions({ conditions }) {
-  if (!conditions) return null;
-  const hasAny = conditions.cancellation || conditions.importantInfo || conditions.terms;
-  if (!hasAny) return null;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Conditions</h2>
-      <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
-        {conditions.cancellation && (
-          <Accordion title="Cancellation policy" defaultOpen={true}>
-            {conditions.cancellation}
-          </Accordion>
-        )}
-        {conditions.importantInfo && (
-          <Accordion title="Important information">
-            {conditions.importantInfo}
-          </Accordion>
-        )}
-        {conditions.terms && (
-          <Accordion title="Terms & Conditions">
-            {conditions.terms}
-          </Accordion>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 7. PREFERENCES
-// ============================================================================
-
-function TourPreferences({ preferences }) {
-  if (!preferences) return null;
-
-  const groups = [
-    { key: 'travelStyle',  label: 'Travel style',    color: 'bg-blue-100 text-blue-700' },
-    { key: 'wayOfTravel',  label: 'Way of travel',   color: 'bg-purple-100 text-purple-700' },
-    { key: 'interests',    label: 'Interests',        color: 'bg-green-100 text-green-700' },
-    { key: 'regions',      label: 'Regions',          color: 'bg-orange-100 text-orange-700' },
-  ];
-
-  const hasDurationTag = !!preferences.durationTag;
-  const hasAnyGroup = groups.some(g => preferences[g.key]?.length) || hasDurationTag;
-  if (!hasAnyGroup) return null;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Tags & Preferences</h2>
-      <div className="space-y-4">
-        {groups.map(({ key, label, color }) =>
-          preferences[key]?.length ? (
-            <div key={key} className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-500 w-24 shrink-0">{label}</span>
-              <div className="flex flex-wrap gap-2">
-                {preferences[key].map((tag, i) => (
-                  <span key={i} className={`px-3 py-1 rounded-full text-sm font-medium ${color}`}>{tag}</span>
-                ))}
-              </div>
-            </div>
-          ) : null
-        )}
-        {hasDurationTag && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-gray-500 w-24 shrink-0">Duration</span>
-            <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">{preferences.durationTag}</span>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 8. ROUTE
-// ============================================================================
-
-function TourRoute({ route }) {
-  if (!route?.stops?.length) return null;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Route & Stays</h2>
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="relative">
-          {route.stops.map((stop, i) => {
-            const isLast = i === route.stops.length - 1;
-            return (
-              <div key={i} className="flex items-start gap-4 relative">
-                {/* Timeline line */}
-                {!isLast && (
-                  <div className="absolute left-3 top-7 bottom-0 w-0.5 bg-gray-200" style={{ height: 'calc(100% - 4px)' }} />
+                {extraIncluded.length > 0 && (
+                  <div className="mt-3 pl-3 border-l-2 border-dashed border-gray-300">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Also included</p>
+                    {extraIncluded.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm text-gray-600 mb-1">
+                        <span className="text-green-500 shrink-0">✓</span>{item}
+                      </div>
+                    ))}
+                  </div>
                 )}
-                {/* Dot */}
-                <div className={`w-6 h-6 rounded-full shrink-0 mt-0.5 flex items-center justify-center z-10 ${
-                  stop.nights === 0 ? 'bg-gray-300' : stop.optional ? 'border-2 border-dashed border-blue-400 bg-white' : 'bg-blue-600'
-                }`}>
-                  {stop.nights === 0 && <span className="text-gray-500 text-xs">✈</span>}
-                </div>
-                <div className="pb-6 flex-1 flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{stop.name}</span>
-                  <div className="flex items-center gap-2">
-                    {stop.optional && (
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full border border-blue-200">Optional</span>
-                    )}
-                    {stop.nights === 0 ? (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Departure</span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-                        {stop.nights} night{stop.nights !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
+              </div>
+            )}
+            {/* Preferences */}
+            {prefGroups.length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-900 mb-2 text-sm">Summary</p>
+                <div className="space-y-2">
+                  {prefGroups.map((group) => (
+                    <div key={group.label} className="flex items-start gap-2">
+                      <span className="text-sm text-gray-500 w-24 shrink-0 pt-0.5">{group.label}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {group.items.map((item) => (
+                          <span key={item} className={`px-2 py-0.5 rounded-full text-xs font-medium ${group.color}`}>{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 9. ACCOMMODATIONS
-// ============================================================================
-
-function TourAccommodations({ accommodationsByStop }) {
-  if (!accommodationsByStop?.length) return null;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Where You'll Stay</h2>
-      <div className="space-y-6">
-        {accommodationsByStop.map((stop, i) => (
-          <div key={i}>
-            <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide mb-3">{stop.stopName}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {stop.options.map((opt, j) => (
-                <div key={j} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-1">
-                    <span className="font-medium text-gray-900">{opt.name}</span>
-                    {opt.stars && (
-                      <span className="text-yellow-400 text-xs shrink-0 ml-2">{'★'.repeat(opt.stars)}</span>
-                    )}
-                  </div>
-                  {opt.description && <p className="text-sm text-gray-600 mb-2">{opt.description}</p>}
-                  {opt.roomTypes?.length ? (
-                    <div className="flex flex-wrap gap-1">
-                      {opt.roomTypes.map((rt, k) => (
-                        <span key={k} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">{rt}</span>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// 10. TRANSPORT
-// ============================================================================
-
-function TourTransport({ transport }) {
-  if (!transport) return null;
-
-  const levelConfig = {
-    optional:    { label: 'Optional',    cls: 'bg-gray-100 text-gray-700' },
-    recommended: { label: 'Recommended', cls: 'bg-yellow-100 text-yellow-700' },
-    required:    { label: 'Required',    cls: 'bg-red-100 text-red-700' },
-  };
-  const cfg = levelConfig[transport.level] || levelConfig.optional;
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Transport</h2>
-      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-medium text-gray-600">Car rental:</span>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${cfg.cls}`}>{cfg.label}</span>
-        </div>
-
-        <div>
-          <span className="text-sm font-medium text-gray-600">Allowed categories:</span>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {transport.allowedCarCategories === 'all' ? (
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">All categories allowed</span>
-            ) : (
-              transport.allowedCarCategories.map((cat, i) => (
-                <span key={i} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">{cat}</span>
-              ))
             )}
           </div>
-        </div>
-
-        {transport.durationMode && (
-          <div className="text-sm text-gray-600">
-            Duration: <span className="font-medium">{transport.durationMode === 'all_days' ? 'All days' : 'Partial'}</span>
-          </div>
-        )}
-
-        {(transport.level === 'recommended' || transport.level === 'required') && transport.note && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-sm text-yellow-800">
-            <span className="font-semibold">Note: </span>{transport.note}
-          </div>
         )}
       </div>
     </section>
@@ -927,51 +573,71 @@ function TourTransport({ transport }) {
 }
 
 // ============================================================================
-// 11. DEPARTURES
+// TOUR DESCRIPTION
 // ============================================================================
 
-function TourDepartures({ departures }) {
-  if (!departures?.length) return null;
-
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr + 'T00:00:00');
-    return `${dayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]}`;
-  };
-
-  const byMonth = departures.reduce((acc, dep) => {
-    const d = new Date(dep.date + 'T00:00:00');
-    const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(dep);
-    return acc;
-  }, {});
-
-  const months = Object.keys(byMonth);
-
+function TourDescription({ tour }) {
+  const { included = [], extraIncluded = [] } = tour;
+  if (!tour.description && !included.length) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Departure Dates</h2>
-      <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
-        {months.map((month, i) => (
-          <Accordion key={month} title={month} defaultOpen={i === 0}>
-            <ul className="space-y-3 pt-1">
-              {byMonth[month].map((dep, j) => (
-                <li key={j} className="flex items-center justify-between">
-                  <span className="text-gray-800 font-medium">{formatDate(dep.date)}</span>
-                  {dep.times?.length ? (
-                    <div className="flex gap-2">
-                      {dep.times.map((t, k) => (
-                        <span key={k} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded">{t}</span>
-                      ))}
-                    </div>
-                  ) : null}
-                </li>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Tour Description</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-5">
+        {tour.description && (
+          <p className="text-gray-700 text-sm leading-relaxed mb-5">{tour.description}</p>
+        )}
+        {included.length > 0 && (
+          <>
+            <h3 className="font-semibold text-gray-900 mb-2">Included</h3>
+            <ShowMore items={included} limit={6} renderItem={(item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-green-600 font-bold mt-0.5 shrink-0">✓</span>{item}
+              </li>
+            )} />
+            {extraIncluded.length > 0 && (
+              <div className="mt-3 pl-3 border-l-2 border-dashed border-gray-300">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Also included</p>
+                {extraIncluded.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm text-gray-600 mb-1">
+                    <span className="text-green-500 shrink-0">✓</span>{item}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// TOUR PREFERENCES
+// ============================================================================
+
+function TourPreferences({ tour }) {
+  const { travelStyle = [], wayOfTravel = [], interests = [], regionTags = [] } = tour;
+  const isEmpty = !travelStyle.length && !wayOfTravel.length && !interests.length && !regionTags.length;
+  if (isEmpty) return null;
+  const groups = [
+    { label: 'Travel Style',  items: travelStyle,  color: 'bg-blue-100 text-blue-700' },
+    { label: 'Way of Travel', items: wayOfTravel,  color: 'bg-purple-100 text-purple-700' },
+    { label: 'Interests',     items: interests,    color: 'bg-green-100 text-green-700' },
+    { label: 'Regions',       items: regionTags,   color: 'bg-orange-100 text-orange-700' },
+  ].filter((g) => g.items.length > 0);
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Preferences</h2>
+      <div className="space-y-3">
+        {groups.map((group) => (
+          <div key={group.label} className="flex items-start gap-3">
+            <span className="text-sm text-gray-500 w-28 shrink-0 pt-1">{group.label}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {group.items.map((item) => (
+                <span key={item} className={`px-3 py-1 rounded-full text-sm font-medium ${group.color}`}>{item}</span>
               ))}
-            </ul>
-          </Accordion>
+            </div>
+          </div>
         ))}
       </div>
     </section>
@@ -979,82 +645,232 @@ function TourDepartures({ departures }) {
 }
 
 // ============================================================================
-// 12. ITINERARY
+// DAY-BY-DAY INTERACTIVE SECTIONS
 // ============================================================================
 
-function TourItinerary({ itinerary }) {
-  if (!itinerary?.length) return null;
+function AccommodationCard({ hotel, selected, onSelect }) {
+  return (
+    <div
+      onClick={onSelect}
+      className={`flex-shrink-0 w-52 rounded-lg border-2 overflow-hidden cursor-pointer transition-all bg-white ${
+        selected
+          ? 'border-blue-500 shadow-md ring-2 ring-blue-100'
+          : 'border-gray-200 hover:border-gray-400 hover:shadow-sm'
+      }`}
+    >
+      {/* Image */}
+      <div className="relative h-32 overflow-hidden">
+        <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+        {/* Rating badge */}
+        <div className="absolute top-2 left-2 bg-white bg-opacity-95 rounded px-2 py-1 flex items-center gap-1.5 shadow-sm">
+          <span className="text-sm font-bold text-gray-900">{hotel.rating}</span>
+          <span className="text-xs text-gray-500">{hotel.reviewCount.toLocaleString()} reviews</span>
+        </div>
+        {/* Learn more */}
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 bg-white text-xs font-medium px-2.5 py-1 rounded shadow-sm hover:bg-gray-50"
+        >
+          Learn more
+        </button>
+        {/* Category badge */}
+        <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+          {hotel.category}
+        </div>
+      </div>
 
-  const [openDays, setOpenDays] = useState(new Set([1]));
+      {/* Content */}
+      <div className="p-3">
+        <h4 className="font-semibold text-gray-900 text-sm mb-3 text-center">{hotel.name}</h4>
 
-  const toggleDay = (dayNumber) => {
-    setOpenDays((prev) => {
-      const next = new Set(prev);
-      next.has(dayNumber) ? next.delete(dayNumber) : next.add(dayNumber);
-      return next;
-    });
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs mb-3">
+          <div>
+            <p className="text-gray-400 mb-0.5">Check-in / out</p>
+            <p className="font-medium text-gray-700">{hotel.checkIn} / {hotel.checkOut}</p>
+          </div>
+          <div>
+            <p className="text-gray-400 mb-0.5">Location</p>
+            <p className="font-medium text-gray-700">{hotel.location}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm text-gray-700">
+            <span className="font-bold text-gray-900">${hotel.pricePerNight}</span>
+            <span className="text-gray-400"> / night</span>
+          </span>
+          {/* Radio indicator */}
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+            selected ? 'border-blue-500 bg-blue-500' : 'border-gray-300 bg-white'
+          }`}>
+            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityModal({ activity, onClose }) {
+  if (!activity) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl overflow-hidden shadow-2xl max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Image */}
+        <div className="relative h-48">
+          <img src={activity.image} alt={activity.name} className="w-full h-full object-cover" />
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md text-gray-700 hover:bg-gray-100 text-lg leading-none"
+          >
+            ×
+          </button>
+          <div className="absolute top-3 left-3 bg-white bg-opacity-95 rounded px-2 py-1 flex items-center gap-1.5 shadow-sm">
+            <span className="text-sm font-bold text-gray-900">{activity.rating}</span>
+            <span className="text-xs text-gray-500">{activity.reviewCount.toLocaleString()} reviews</span>
+          </div>
+        </div>
+        {/* Body */}
+        <div className="p-5">
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{activity.name}</h3>
+          <div className="flex items-center gap-3 mb-4 text-sm">
+            <span className="bg-gray-100 text-gray-600 rounded px-2 py-0.5">{activity.duration}</span>
+            <span className="font-bold text-gray-900">${activity.pricePerPerson}<span className="font-normal text-gray-500">/person</span></span>
+          </div>
+          <p className="text-gray-600 text-sm leading-relaxed">{activity.description}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityCard({ activity, selected, onToggle, onLearnMore }) {
+  return (
+    <div
+      onClick={onToggle}
+      className={`flex-shrink-0 w-52 rounded-lg border-2 overflow-hidden cursor-pointer transition-all bg-white ${
+        selected
+          ? 'border-blue-500 shadow-md ring-2 ring-blue-100'
+          : 'border-gray-200 hover:border-gray-400 hover:shadow-sm'
+      }`}
+    >
+      {/* Image */}
+      <div className="relative h-32 overflow-hidden">
+        <img src={activity.image} alt={activity.name} className="w-full h-full object-cover" />
+        {/* Rating badge */}
+        <div className="absolute top-2 left-2 bg-white bg-opacity-95 rounded px-2 py-1 flex items-center gap-1.5 shadow-sm">
+          <span className="text-sm font-bold text-gray-900">{activity.rating}</span>
+          <span className="text-xs text-gray-500">{activity.reviewCount.toLocaleString()} reviews</span>
+        </div>
+        {/* Learn more */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onLearnMore?.(activity); }}
+          className="absolute top-2 right-2 bg-white text-xs font-medium px-2.5 py-1 rounded shadow-sm hover:bg-gray-50"
+        >
+          Learn more
+        </button>
+        {/* Checkbox indicator */}
+        <div className={`absolute bottom-2 right-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+          selected ? 'border-blue-500 bg-blue-500' : 'border-white bg-white bg-opacity-80'
+        }`}>
+          {selected && <span className="text-white text-xs font-bold leading-none">✓</span>}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3">
+        <h4 className="font-semibold text-gray-900 text-sm mb-2">{activity.name}</h4>
+        <div className="flex items-center justify-between text-xs">
+          <span className="bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{activity.duration}</span>
+          <span className="font-bold text-gray-900">${activity.pricePerPerson}<span className="font-normal text-gray-400">/person</span></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TourDays({ days, daySelections, onSelectAccommodation, onToggleActivity }) {
+  if (!days?.length) return null;
+  const [modalActivity, setModalActivity] = useState(null);
+
+  const formatDayDate = (dateStr) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    const weekday = d.toLocaleDateString('en-US', { weekday: 'long' });
+    const monthName = d.toLocaleDateString('en-US', { month: 'long' });
+    return `${weekday}, ${monthName} ${day}`;
   };
+
+  const lastDayNumber = days[days.length - 1].dayNumber;
 
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Day-by-Day Itinerary</h2>
-      <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
-        {itinerary.map((day) => {
-          const isOpen = openDays.has(day.dayNumber);
+      <ActivityModal activity={modalActivity} onClose={() => setModalActivity(null)} />
+      <div className="space-y-10">
+        {days.map((day) => {
+          const isLastDay = day.dayNumber === lastDayNumber;
+          const sel = daySelections[day.dayNumber] || { accommodation: null, activities: [] };
+
           return (
-            <div key={day.dayNumber}>
-              <button
-                onClick={() => toggleDay(day.dayNumber)}
-                className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50"
-              >
-                <span className="font-semibold text-gray-900">
-                  Day {day.dayNumber}{day.title ? ` — ${day.title}` : ''}
-                </span>
-                <span className="text-gray-400 text-sm ml-4">{isOpen ? '▲' : '▼'}</span>
-              </button>
+            <div key={day.dayNumber} className="border-t border-gray-100 pt-8 first:border-t-0 first:pt-0">
+              {/* Day header */}
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex flex-col items-center justify-center shrink-0 shadow-sm">
+                  <span className="text-[10px] font-semibold uppercase leading-none mb-0.5">Day</span>
+                  <span className="text-xl font-bold leading-none">{day.dayNumber}</span>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{formatDayDate(day.date)}</h2>
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                    <span>📍 {day.city}</span>
+                    <span>·</span>
+                    <span>{day.region}</span>
+                  </div>
+                </div>
+              </div>
 
-              {isOpen && (
-                <div className="px-6 pb-6 space-y-4">
-                  {day.description && (
-                    <p className="text-sm text-gray-700 leading-relaxed">{day.description}</p>
-                  )}
+              {/* Accommodation — skip on last day */}
+              {!isLastDay && day.accommodations?.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-base font-semibold text-orange-600 mb-3">
+                    Accommodation on day {day.dayNumber}
+                  </h3>
+                  <div className="flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
+                    {day.accommodations.map((hotel) => (
+                      <AccommodationCard
+                        key={hotel.id}
+                        hotel={hotel}
+                        selected={sel.accommodation?.id === hotel.id}
+                        onSelect={() => onSelectAccommodation(day.dayNumber, hotel)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                  {day.activities?.length ? (
-                    <ul className="space-y-2">
-                      {day.activities.map((act, i) => (
-                        <li
-                          key={i}
-                          className={`flex items-start gap-3 text-sm p-3 rounded-md ${
-                            act.included ? 'bg-green-50' : 'bg-gray-50 border border-dashed border-gray-200'
-                          }`}
-                        >
-                          <span className={`shrink-0 mt-0.5 ${act.included ? 'text-green-600' : 'text-gray-400'}`}>
-                            {act.included ? '✓' : '○'}
-                          </span>
-                          <div className="flex-1">
-                            <span className={act.included ? 'text-gray-800' : 'text-gray-600'}>{act.title}</span>
-                            {!act.included && (
-                              <span className="ml-2 text-xs text-gray-400 italic">Optional</span>
-                            )}
-                            {(act.time || act.duration) && (
-                              <span className="ml-2 text-xs text-gray-400">
-                                {act.time && `${act.time}`}{act.time && act.duration && ' · '}{act.duration && `${act.duration}`}
-                              </span>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-
-                  {day.overnightStop && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs">🛏</span>
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
-                        Overnight: {day.overnightStop}
-                      </span>
-                    </div>
-                  )}
+              {/* Activities */}
+              {day.activities?.length > 0 && (
+                <div>
+                  <h3 className="text-base font-semibold text-orange-600 mb-3">
+                    Tours on day {day.dayNumber}
+                  </h3>
+                  <div className="flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
+                    {day.activities.map((activity) => (
+                      <ActivityCard
+                        key={activity.id}
+                        activity={activity}
+                        selected={sel.activities.some((a) => a.id === activity.id)}
+                        onToggle={() => onToggleActivity(day.dayNumber, activity)}
+                        onLearnMore={setModalActivity}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1066,42 +882,118 @@ function TourItinerary({ itinerary }) {
 }
 
 // ============================================================================
-// 13. MEDIA
+// TRANSPORT
+// ============================================================================
+
+function TourTransport({ transport }) {
+  if (!transport) return null;
+  const { allowCarRental, advisedAllDays, allowedCarCategories, notes } = transport;
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Transport</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-gray-600">Car rental available</span>
+          {allowCarRental ? <span className="text-green-600 font-medium">✓ Yes</span> : <span className="text-red-500 font-medium">✗ No</span>}
+        </div>
+        {!allowCarRental && (
+          <div className="bg-gray-50 border border-gray-200 rounded p-3 text-gray-600">
+            Car rental is not available for this tour. Transport is arranged as part of the package.
+          </div>
+        )}
+        {allowCarRental && (
+          <>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Advised for all days</span>
+              {advisedAllDays ? <span className="text-green-600 font-medium">✓ Yes</span> : <span className="text-yellow-600 font-medium">⚠ Partial</span>}
+            </div>
+            {!advisedAllDays && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-yellow-800">
+                Car rental is not advised for all days. Check the itinerary for days where transport is included.
+              </div>
+            )}
+            <div>
+              <p className="text-gray-500 mb-1.5">Allowed vehicle categories</p>
+              {allowedCarCategories === 'all' ? (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">All categories</span>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {(Array.isArray(allowedCarCategories) ? allowedCarCategories : [allowedCarCategories]).map((cat) => (
+                    <span key={cat} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">{cat}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        {notes && <p className="text-gray-500 border-t border-gray-100 pt-3">{notes}</p>}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// BRING WITH YOU
+// ============================================================================
+
+function TourBringWithYou({ items }) {
+  if (!items?.length) return null;
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Bring With You</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded p-2.5">
+            <span className="w-4 h-4 border-2 border-gray-300 rounded-sm shrink-0 inline-block" />
+            {item}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// CONDITIONS
+// ============================================================================
+
+function TourConditions({ conditions }) {
+  if (!conditions) return null;
+  const { cancellation, importantInfo, terms } = conditions;
+  if (!cancellation && !importantInfo && !terms) return null;
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Conditions</h2>
+      <div className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-200">
+        {cancellation && <Accordion title="Cancellation policy" defaultOpen><p>{cancellation}</p></Accordion>}
+        {importantInfo && <Accordion title="Important information"><p>{importantInfo}</p></Accordion>}
+        {terms && <Accordion title="Terms & Conditions"><p>{terms}</p></Accordion>}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
+// MEDIA GALLERY
 // ============================================================================
 
 function TourMedia({ media }) {
   const [lightbox, setLightbox] = useState(null);
   if (!media?.images?.length) return null;
-
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Gallery</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-        {media.images.map((img, i) => (
-          <button
-            key={i}
-            onClick={() => setLightbox(img)}
-            className="aspect-square rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
-          >
-            <img src={img} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Gallery</h2>
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {media.images.map((src, i) => (
+          <button key={i} onClick={() => setLightbox(src)} className="aspect-square overflow-hidden rounded-md border border-gray-200 hover:opacity-80 transition-opacity">
+            <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
           </button>
         ))}
       </div>
-
       {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
-          onClick={() => setLightbox(null)}
-        >
-          <div className="relative max-w-4xl max-h-screen p-4" onClick={(e) => e.stopPropagation()}>
-            <img src={lightbox} alt="Gallery" className="max-w-full max-h-[80vh] object-contain rounded-lg" />
-            <button
-              onClick={() => setLightbox(null)}
-              className="mt-4 block mx-auto text-white border border-white px-6 py-2 rounded-md hover:bg-white hover:text-black transition-colors"
-            >
-              Close
-            </button>
-          </div>
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" onClick={() => setLightbox(null)}>
+          <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 text-white text-2xl font-bold hover:text-gray-300">✕</button>
+          <img src={lightbox} alt="Full view" className="max-w-full max-h-full rounded-lg" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </section>
@@ -1109,40 +1001,28 @@ function TourMedia({ media }) {
 }
 
 // ============================================================================
-// 14. EXTRAS
+// OPTIONAL EXTRAS
 // ============================================================================
 
 function TourExtras({ extrasByCategory }) {
   if (!extrasByCategory?.length) return null;
-
-  const unitLabel = (unit) => {
-    if (unit === 'per_person') return '/ person';
-    if (unit === 'per_day') return '/ day';
-    if (unit === 'per_booking') return '/ booking';
-    return '';
-  };
-
+  const unitLabel = (u) => u === 'per_person' ? 'per person' : u === 'per_day' ? 'per day' : 'per booking';
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Optional Extras</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Optional Extras</h2>
       <div className="space-y-6">
-        {extrasByCategory.map((group, i) => (
-          <div key={i}>
-            <h3 className="font-semibold text-gray-500 text-sm uppercase tracking-wide mb-3">{group.category}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {group.products.map((product, j) => (
-                <div key={j} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-medium text-gray-900">{product.title}</span>
-                    {product.price != null && (
-                      <span className="text-blue-600 font-semibold text-sm shrink-0 ml-2">
-                        ${product.price} <span className="text-gray-400 font-normal">{unitLabel(product.pricingUnit)}</span>
-                      </span>
-                    )}
+        {extrasByCategory.map((cat) => (
+          <div key={cat.category}>
+            <h3 className="font-semibold text-gray-700 mb-2">{cat.category}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {cat.products.map((p) => (
+                <div key={p.title} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="font-medium text-gray-900 text-sm">{p.title}</span>
+                    <span className="text-sm font-bold text-gray-900 shrink-0">${p.price}</span>
                   </div>
-                  {product.description && (
-                    <p className="text-sm text-gray-600">{product.description}</p>
-                  )}
+                  <p className="text-xs text-gray-500 mb-1">{p.description}</p>
+                  <span className="text-xs text-gray-400">{unitLabel(p.pricingUnit)}</span>
                 </div>
               ))}
             </div>
@@ -1154,142 +1034,213 @@ function TourExtras({ extrasByCategory }) {
 }
 
 // ============================================================================
-// 15. PREVIEW SUMMARY
+// BOOKING PANEL — SELECTION SUMMARY
 // ============================================================================
 
-function TourPreviewSummary({ tour }) {
-  const formatDate = (d) => {
-    if (!d) return '';
-    const [, m, day] = d.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[parseInt(m,10)-1]} ${parseInt(day,10)}`;
+function PanelSelectionSummary({ days, daySelections }) {
+  // Start collapsed; auto-expand when the user makes a new selection
+  const [hotelsOpen, setHotelsOpen] = useState(false);
+  const [activitiesOpen, setActivitiesOpen] = useState(false);
+  const prevHotelsRef = useRef(0);
+  const prevActivitiesRef = useRef(0);
+
+  useEffect(() => {
+    if (!days?.length) return;
+    const lastDayNum = days[days.length - 1].dayNumber;
+    const hDays = days.filter((d) => d.dayNumber !== lastDayNum);
+    const currHotels = hDays.filter((d) => daySelections[d.dayNumber]?.accommodation).length;
+    const currActivities = days.reduce((sum, d) => sum + (daySelections[d.dayNumber]?.activities?.length || 0), 0);
+    if (currHotels > prevHotelsRef.current) setHotelsOpen(true);
+    if (currActivities > prevActivitiesRef.current) setActivitiesOpen(true);
+    prevHotelsRef.current = currHotels;
+    prevActivitiesRef.current = currActivities;
+  }, [daySelections, days]);
+
+  if (!days?.length) return null;
+
+  const lastDayNumber = days[days.length - 1].dayNumber;
+
+  const fmtShort = (dateStr) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
-  const routeSummary = tour.route?.stops
-    ?.filter(s => s.nights > 0)
-    .map(s => s.name)
-    .join(' → ');
+  const hotelDays = days.filter((d) => d.dayNumber !== lastDayNumber);
+  const selectedHotelsCount = hotelDays.filter((d) => daySelections[d.dayNumber]?.accommodation).length;
+  const allActivities = days.reduce((sum, d) => sum + (daySelections[d.dayNumber]?.activities?.length || 0), 0);
+  const activityDaysWithData = days.filter((d) => (daySelections[d.dayNumber]?.activities?.length || 0) > 0);
+
+  const GroupHeader = ({ label, count, open, onToggle }) => (
+    <button
+      onClick={onToggle}
+      className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 text-left"
+    >
+      <span className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">
+        {label}
+        {count > 0 && (
+          <span className="ml-1.5 text-blue-600 normal-case font-normal tracking-normal">
+            {label === 'Hotels' ? `${selectedHotelsCount}/${hotelDays.length}` : `${count}`}
+          </span>
+        )}
+      </span>
+      <span className="text-gray-400 text-[10px]">{open ? '▲' : '▼'}</span>
+    </button>
+  );
 
   return (
-    <section className="mt-10">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Trip at a Glance</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-          <div className="space-y-3">
-            <div>
-              <span className="text-gray-500 block">Duration</span>
-              <span className="font-medium text-gray-900">{tour.durationDays} days / {tour.durationNights} nights</span>
-            </div>
-            {tour.season && (
-              <div>
-                <span className="text-gray-500 block">Season</span>
-                <span className="font-medium text-gray-900">{formatDate(tour.season.startDate)} – {formatDate(tour.season.endDate)}</span>
+    <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden text-sm">
+      {/* ── Hotels ── */}
+      <GroupHeader label="Hotels" count={selectedHotelsCount} open={hotelsOpen} onToggle={() => setHotelsOpen(!hotelsOpen)} />
+      {hotelsOpen && (
+        <div className="divide-y divide-gray-100">
+          {hotelDays.map((day) => {
+            const hotel = daySelections[day.dayNumber]?.accommodation;
+            return (
+              <div key={day.dayNumber} className="px-3 py-2">
+                <div className="text-[12px] font-semibold text-gray-700 mb-0.5">
+                  Day {day.dayNumber} · {fmtShort(day.date)}
+                </div>
+                {hotel ? (
+                  <div className="flex items-baseline gap-1 leading-tight">
+                    <span className="font-medium text-gray-800 truncate">{hotel.name}</span>
+                    <span className="text-gray-500 shrink-0">· included</span>
+                  </div>
+                ) : (
+                  <div className="text-[12px] text-gray-400 italic">Not selected</div>
+                )}
               </div>
-            )}
-            {routeSummary && (
-              <div>
-                <span className="text-gray-500 block">Route</span>
-                <span className="font-medium text-gray-900">{routeSummary}</span>
-              </div>
-            )}
-            {tour.conditions?.cancellation && (
-              <div>
-                <span className="text-gray-500 block">Cancellation</span>
-                <span className="text-gray-700">{tour.conditions.cancellation.split('.')[0]}.</span>
-              </div>
-            )}
-          </div>
-          <div className="space-y-3">
-            {tour.highlights?.length ? (
-              <div>
-                <span className="text-gray-500 block mb-1">Top highlights</span>
-                <ul className="space-y-1">
-                  {tour.highlights.slice(0, 4).map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-700">
-                      <span className="text-yellow-400 shrink-0">★</span> {h}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {tour.itinerary?.length ? (
-              <div>
-                <span className="text-gray-500 block mb-1">Quick itinerary</span>
-                <ul className="space-y-0.5">
-                  {tour.itinerary.map((day) => (
-                    <li key={day.dayNumber} className="text-gray-700">
-                      <span className="font-medium">Day {day.dayNumber}:</span> {day.title || '—'}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
+            );
+          })}
         </div>
-      </div>
-    </section>
+      )}
+
+      <div className="border-t border-gray-200" />
+
+      {/* ── Activities ── */}
+      <GroupHeader label="Activities" count={allActivities} open={activitiesOpen} onToggle={() => setActivitiesOpen(!activitiesOpen)} />
+      {activitiesOpen && (
+        <div className="divide-y divide-gray-100">
+          {activityDaysWithData.length === 0 ? (
+            <div className="px-3 py-2 text-gray-400 italic">No activities selected</div>
+          ) : (
+            activityDaysWithData.map((day) => {
+              const acts = daySelections[day.dayNumber].activities;
+              return (
+                <div key={day.dayNumber} className="px-3 py-2 space-y-0.5">
+                  <div className="text-[12px] font-semibold text-gray-500 mb-1">
+                    Day {day.dayNumber} · {fmtShort(day.date)}
+                  </div>
+                  <div className="text-[12px] text-gray-500 mb-1">📍 {day.city}</div>
+                  {acts.map((act) => (
+                    <div key={act.id} className="text-gray-800 leading-tight truncate">{act.name}</div>
+                  ))}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 // ============================================================================
-// BOOKING PANEL (right column)
+// BOOKING PANEL  (right column, sticky)
 // ============================================================================
 
-function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, added, isEditing }) {
+function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, added, isEditing, daySelections }) {
   const [saved, setSaved] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
   const total = tour.priceFrom * participants;
-
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-24">
-      <div className="mb-4">
-        <span className="text-sm text-gray-500">from</span>
-        <div>
-          <span className="text-3xl font-bold text-gray-900">${tour.priceFrom}</span>
-          <span className="text-gray-500 ml-1 text-sm">/ person</span>
+    <div className="sticky top-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-5">
+        <p className="text-sm text-gray-500 mb-1">from</p>
+        <p className="text-3xl font-bold text-gray-900 mb-1">
+          ${tour.priceFrom}<span className="text-base font-normal text-gray-500"> / person</span>
+        </p>
+        <p className="text-xs text-gray-400 mb-5">{tour.totalDays} days · {tour.totalDays - 1} nights</p>
+
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-gray-700">Dates</span>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-      </div>
 
-      <div className="mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Travelers</label>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setParticipants(Math.max(1, participants - 1))}
-            className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-lg font-medium"
-          >
-            −
-          </button>
-          <span className="w-8 text-center font-medium text-lg">{participants}</span>
-          <button
-            onClick={() => setParticipants(participants + 1)}
-            className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-lg font-medium"
-          >
-            +
-          </button>
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-gray-700">Travelers</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setParticipants(Math.max(1, participants - 1))} className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none">−</button>
+            <span className="w-6 text-center font-medium text-gray-900">{participants}</span>
+            <button onClick={() => setParticipants(participants + 1)} className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none">+</button>
+          </div>
         </div>
+
+        <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
+          <span className="text-gray-600">{participants} × ${tour.priceFrom}</span>
+          <span className="font-bold text-gray-900 text-lg">${total}</span>
+        </div>
+
+        <button
+          onClick={onAddToCart}
+          className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
+            added ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          {added ? '✓ Updated' : isEditing ? `Update Cart — $${total}` : `Add to Cart — $${total}`}
+        </button>
+
+        <PanelSelectionSummary days={tour.days} daySelections={daySelections} />
       </div>
 
-      <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
-        <span className="text-gray-600">{participants} × ${tour.priceFrom}</span>
-        <span className="font-bold text-gray-900 text-lg">${total}</span>
-      </div>
+      {tour.tourType === 'self_drive' && tour.transport?.recommendedCar && (() => {
+        const car = tour.transport.recommendedCar;
+        return (
+          <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-700 mb-3">Car Rental</p>
+            <div className="flex gap-3 items-center">
+              <div className="w-20 h-14 rounded overflow-hidden shrink-0 bg-gray-100">
+                <img src={car.image} alt={`${car.make} ${car.model}`} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-700 rounded font-medium">{car.type}</span>
+                  <span className="text-xs text-gray-400">{car.transmission}</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-900">{car.make} {car.model}</p>
+                <p className="text-xs text-gray-500 mt-0.5">${car.pricePerDay} / day</p>
+              </div>
+            </div>
+            {tour.transport.notes && (
+              <p className="mt-3 text-xs text-amber-700 bg-amber-50 rounded p-2 leading-relaxed">{tour.transport.notes}</p>
+            )}
+          </div>
+        );
+      })()}
 
-      <button
-        onClick={onAddToCart}
-        className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
-          added ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-        }`}
-      >
-        {added ? '✓ Updated' : isEditing ? `Update Cart — $${total}` : `Add to Cart — $${total}`}
-      </button>
-
-      <button
-        onClick={() => setSaved(!saved)}
-        className={`mt-2 w-full border py-3 px-4 rounded-md font-medium transition-colors ${
-          saved ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-        }`}
-      >
-        {saved ? '♥ Saved' : '♡ Save'}
-      </button>
+      {/* {tour.availabilityLabels?.length > 0 && (
+        <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Available as</p>
+          <div className="flex flex-wrap gap-1.5">
+        <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+          <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Available as</p>
+          <div className="flex flex-wrap gap-1.5">
+            {tour.availabilityLabels.map((label) => (
+              <span key={label} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{label}</span>
+            ))}
+          </div>
+        </div>
+            {tour.availabilityLabels.map((label) => (
+              <span key={label} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{label}</span>
+            ))}
+          </div>
+        </div>
+      )} */}
     </div>
   );
 }
@@ -1312,12 +1263,51 @@ export default function TourDetail() {
 
   const [added, setAdded] = useState(false);
   const [participants, setParticipants] = useState(1);
+  const [daySelections, setDaySelections] = useState({});
 
+  // Initialise day selections when tour loads
+  useEffect(() => {
+    if (tour) {
+      const initial = {};
+      (tour.days || []).forEach((day) => {
+        initial[day.dayNumber] = { accommodation: null, activities: [] };
+      });
+      setDaySelections(initial);
+    }
+  }, [tour?.id]);
+
+  // Load from existing cart item (edit mode)
   useEffect(() => {
     if (existingItem) {
       setParticipants(existingItem.participants || 1);
+      if (existingItem.daySelections) {
+        setDaySelections(existingItem.daySelections);
+      }
     }
   }, [existingItem]);
+
+  const handleSelectAccommodation = (dayNumber, hotel) => {
+    setDaySelections((prev) => ({
+      ...prev,
+      [dayNumber]: { ...prev[dayNumber], accommodation: hotel },
+    }));
+  };
+
+  const handleToggleActivity = (dayNumber, activity) => {
+    setDaySelections((prev) => {
+      const current = prev[dayNumber]?.activities || [];
+      const exists = current.some((a) => a.id === activity.id);
+      return {
+        ...prev,
+        [dayNumber]: {
+          ...prev[dayNumber],
+          activities: exists
+            ? current.filter((a) => a.id !== activity.id)
+            : [...current, activity],
+        },
+      };
+    });
+  };
 
   const handleAddToCart = () => {
     const cartItem = {
@@ -1328,16 +1318,16 @@ export default function TourDetail() {
       image: tour.image,
       shortDescription: tour.highlights?.[0] || '',
       tourType: tour.tourType,
-      days: tour.durationDays,
+      days: tour.totalDays,
       participants,
       pricePerPerson: tour.priceFrom,
-      startDate: tour.departures?.[0]?.date || tour.season?.startDate || '',
-      endDate: '',
-      includedActivities: tour.itinerary?.flatMap((d) =>
-        (d.activities || [])
-          .filter((a) => a.included)
-          .map((a) => ({ name: a.title, requiresShoeSize: false }))
-      ) || [],
+      startDate: tour.days?.[0]?.date || tour.season?.startDate || '',
+      endDate: tour.days?.[tour.days.length - 1]?.date || '',
+      daySelections,
+      // Flatten selected activities for requirements engine compatibility
+      includedActivities: Object.values(daySelections)
+        .flatMap((ds) => ds.activities || [])
+        .map((a) => ({ name: a.name, requiresShoeSize: false })),
       needsInfo: true,
     };
 
@@ -1356,9 +1346,7 @@ export default function TourDetail() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Tour not found</h1>
-          <Link to="/tours" className="text-blue-600 hover:text-blue-700">
-            ← Back to Tours
-          </Link>
+          <Link to="/tours" className="text-blue-600 hover:text-blue-700">← Back to Tours</Link>
         </div>
       </div>
     );
@@ -1374,59 +1362,27 @@ export default function TourDetail() {
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left column — main content */}
+        {/* Left column */}
         <div className="lg:col-span-2">
-          {/* 1 — Hero */}
           <TourHero tour={tour} />
+          <TourBasics tour={tour} />
 
-          {/* 2 — Key info */}
-          <TourKeyInfo tour={tour} />
-
-          {/* 3 — Highlights */}
-          <TourHighlights highlights={tour.highlights} />
-
-          {/* 4 — Inclusions */}
-          <TourInclusions
-            included={tour.included}
-            extraIncluded={tour.extraIncluded}
-            notIncluded={tour.notIncluded}
+          {/* Day-by-day interactive selection */}
+          <TourDays
+            days={tour.days}
+            daySelections={daySelections}
+            onSelectAccommodation={handleSelectAccommodation}
+            onToggleActivity={handleToggleActivity}
           />
 
-          {/* 5 — Bring with you */}
-          <TourBringWithYou items={tour.bringWithYou} />
-
-          {/* 6 — Conditions */}
-          <TourConditions conditions={tour.conditions} />
-
-          {/* 7 — Preferences */}
-          <TourPreferences preferences={tour.preferences} />
-
-          {/* 8 — Route */}
-          <TourRoute route={tour.route} />
-
-          {/* 9 — Accommodations */}
-          <TourAccommodations accommodationsByStop={tour.accommodationsByStop} />
-
-          {/* 10 — Transport */}
           <TourTransport transport={tour.transport} />
-
-          {/* 11 — Departures */}
-          <TourDepartures departures={tour.departures} />
-
-          {/* 12 — Itinerary */}
-          <TourItinerary itinerary={tour.itinerary} />
-
-          {/* 13 — Media */}
+          <TourBringWithYou items={tour.bringWithYou} />
+          <TourConditions conditions={tour.conditions} />
           <TourMedia media={tour.media} />
-
-          {/* 14 — Extras */}
           <TourExtras extrasByCategory={tour.extrasByCategory} />
-
-          {/* 15 — Preview summary */}
-          <TourPreviewSummary tour={tour} />
         </div>
 
-        {/* Right column — booking panel */}
+        {/* Right column */}
         <div className="lg:col-span-1">
           <TourBookingPanel
             tour={tour}
@@ -1435,6 +1391,7 @@ export default function TourDetail() {
             onAddToCart={handleAddToCart}
             added={added}
             isEditing={isEditing}
+            daySelections={daySelections}
           />
         </div>
       </div>

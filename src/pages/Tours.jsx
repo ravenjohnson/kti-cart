@@ -58,9 +58,9 @@ const TOURS = [
       { name: 'Whale Watching', requiresShoeSize: false },
       { name: 'Diamond Beach Visit', requiresShoeSize: false },
     ],
-    included: ['6 nights accommodation', 'All transportation', 'Professional guide', 'All listed activities', 'Most meals'],
+    included: ['6 nights accommodation', 'Car rental (CDW included)', 'Detailed route book & GPS', 'All road tolls'],
     regions: ['South Iceland', 'East Iceland', 'North Iceland', 'Akureyri'],
-    tourType: 'Guided',
+    tourType: 'Self-drive',
     availableDates: ['2025-06-07', '2025-06-28', '2025-07-19', '2025-08-09'],
     maxTravelers: 10,
     difficulty: 'Moderate',
@@ -347,7 +347,7 @@ export default function Tours() {
                 </div>
 
                 <h3 className="text-xl font-bold text-gray-900 mb-1">{tour.name}</h3>
-                <p className="text-sm text-gray-500 mb-3">📅 {tour.days} days · max {tour.maxTravelers} travelers</p>
+                <p className="text-sm text-gray-500 mb-3">📅 {tour.days} days</p>
                 <p className="text-gray-600 text-sm mb-4">{tour.description}</p>
 
                 <div className="mb-4">

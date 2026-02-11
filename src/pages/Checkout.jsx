@@ -637,16 +637,36 @@ function CartItemDetails({ item }) {
             <div className="font-medium">${item.pricePerPerson}/person</div>
           </div>
         </div>
-        {item.includedActivities?.length > 0 && (
-          <div>
-            <div className="text-gray-500 mb-1">Included activities</div>
-            <div className="flex flex-wrap gap-1">
-              {item.includedActivities.map((act, i) => (
-                <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                  {act.name}
-                </span>
-              ))}
-            </div>
+        {item.daySelections && Object.keys(item.daySelections).length > 0 && (
+          <div className="space-y-2">
+            <div className="text-gray-500 mb-1">Day selections</div>
+            {Object.entries(item.daySelections)
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([dayNum, sel]) => {
+                const hasAccom = sel.accommodation;
+                const hasActivities = sel.activities?.length > 0;
+                if (!hasAccom && !hasActivities) return null;
+                return (
+                  <div key={dayNum} className="border border-gray-100 rounded p-2 text-xs space-y-1">
+                    <p className="font-semibold text-gray-700">Day {dayNum}</p>
+                    {hasAccom && (
+                      <p className="text-gray-600">
+                        🏨 <span className="font-medium">{sel.accommodation.name}</span>
+                        <span className="text-gray-400"> · ${sel.accommodation.pricePerNight}/night</span>
+                      </p>
+                    )}
+                    {hasActivities && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {sel.activities.map((act) => (
+                          <span key={act.id} className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
+                            {act.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
