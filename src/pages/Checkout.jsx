@@ -322,6 +322,9 @@ export default function Checkout() {
               </label>
             </div>
 
+            {/* Payment */}
+            <PaymentForm />
+
             {/* Pay Button (Desktop) */}
             <div className="hidden lg:block">
               <button
@@ -1040,12 +1043,47 @@ function RequirementsForm({ requirements, people, onUpdatePerson }) {
 // PAYMENT FORM COMPONENT
 // ============================================================================
 
+function CardLogo({ brand }) {
+  if (brand === 'visa') return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-gray-200 bg-white">
+      <span className="text-[10px] font-extrabold italic tracking-tight text-blue-700">VISA</span>
+    </span>
+  );
+  if (brand === 'mc') return (
+    <span className="inline-flex items-center px-1 py-0.5 rounded border border-gray-200 bg-white gap-0">
+      <span className="w-3.5 h-3.5 rounded-full bg-red-500 opacity-90 -mr-1.5 inline-block" />
+      <span className="w-3.5 h-3.5 rounded-full bg-yellow-400 opacity-90 inline-block" />
+    </span>
+  );
+  if (brand === 'amex') return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-gray-200 bg-blue-600">
+      <span className="text-[10px] font-bold tracking-tight text-white">AMEX</span>
+    </span>
+  );
+  if (brand === 'discover') return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-gray-200 bg-white">
+      <span className="text-[10px] font-bold tracking-tight text-orange-500">DISC</span>
+    </span>
+  );
+  return null;
+}
+
+function detectCardBrand(number) {
+  const n = number.replace(/\s/g, '');
+  if (n.startsWith('4')) return 'visa';
+  if (n.startsWith('5') || n.startsWith('2')) return 'mc';
+  if (n.startsWith('3')) return 'amex';
+  if (n.startsWith('6')) return 'discover';
+  return null;
+}
+
 function PaymentForm() {
   const [method, setMethod] = React.useState('card');
   const [cardNumber, setCardNumber] = React.useState('');
   const [expiry, setExpiry] = React.useState('');
   const [cvc, setCvc] = React.useState('');
   const [cardName, setCardName] = React.useState('');
+  const [saveCard, setSaveCard] = React.useState(false);
 
   const formatCardNumber = (val) => {
     const digits = val.replace(/\D/g, '').slice(0, 16);
@@ -1058,110 +1096,203 @@ function PaymentForm() {
     return digits;
   };
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <h3 className="font-semibold text-gray-900 mb-4">Payment</h3>
+  const detectedBrand = detectCardBrand(cardNumber);
 
-      {/* Method tabs */}
-      <div className="flex gap-2 mb-4">
-        {[
-          { id: 'card', label: '💳 Card' },
-          { id: 'paypal', label: '🅿 PayPal' },
-          { id: 'bank', label: '🏦 Bank transfer' },
-        ].map((m) => (
-          <button
-            key={m.id}
-            onClick={() => setMethod(m.id)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-              method === m.id
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
+  const METHODS = [
+    { id: 'card', label: 'Credit / Debit card' },
+    { id: 'paypal', label: 'PayPal' },
+    { id: 'klarna', label: 'Pay later with Klarna' },
+  ];
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+        <h3 className="font-semibold text-gray-900">Payment</h3>
       </div>
 
-      {method === 'card' && (
-        <div className="space-y-3">
-          {/* Card number */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Card number</label>
-            <div className="relative">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                placeholder="1234 5678 9012 3456"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 select-none">
-                VISA · MC
+      <div className="p-5 space-y-4">
+        {/* Express checkout */}
+        <div>
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Express checkout</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button className="flex items-center justify-center gap-2 h-10 rounded-lg bg-black text-white text-sm font-medium hover:bg-gray-900 transition-colors">
+              <span className="text-base leading-none"></span>
+              <span>Apple Pay</span>
+            </button>
+            <button className="flex items-center justify-center gap-2 h-10 rounded-lg bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              <span className="font-bold text-sm">
+                <span className="text-blue-500">G</span><span className="text-red-500">o</span><span className="text-yellow-500">o</span><span className="text-blue-500">g</span><span className="text-green-500">l</span><span className="text-red-500">e</span>
               </span>
-            </div>
+              <span>Pay</span>
+            </button>
           </div>
+        </div>
 
-          {/* Expiry + CVC */}
-          <div className="grid grid-cols-2 gap-3">
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">or pay another way</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Method tiles */}
+        <div className="space-y-2">
+          {METHODS.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setMethod(m.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors ${
+                method === m.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                method === m.id ? 'border-blue-500' : 'border-gray-300'
+              }`}>
+                {method === m.id && <span className="w-2 h-2 rounded-full bg-blue-500 block" />}
+              </span>
+              <span className="flex-1 text-sm font-medium text-gray-800">{m.label}</span>
+              {m.id === 'card' && (
+                <span className="flex items-center gap-1">
+                  <CardLogo brand="visa" />
+                  <CardLogo brand="mc" />
+                  <CardLogo brand="amex" />
+                  <CardLogo brand="discover" />
+                </span>
+              )}
+              {m.id === 'paypal' && (
+                <span className="text-sm font-bold">
+                  <span className="text-blue-800">Pay</span><span className="text-blue-500">Pal</span>
+                </span>
+              )}
+              {m.id === 'klarna' && (
+                <span className="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-xs font-semibold">Klarna</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Card form */}
+        {method === 'card' && (
+          <div className="space-y-3 pt-1">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Expiry date</label>
+              <label className="block text-xs text-gray-500 mb-1">Card number</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                  placeholder="1234 5678 9012 3456"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {detectedBrand
+                    ? <CardLogo brand={detectedBrand} />
+                    : <span className="text-xs text-gray-300 select-none">0000</span>
+                  }
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Expiry date</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={expiry}
+                  onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                  placeholder="MM / YY"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">CVC / CVV</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={cvc}
+                    onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="123"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 text-sm">?</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Cardholder name</label>
               <input
                 type="text"
-                inputMode="numeric"
-                value={expiry}
-                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                placeholder="MM / YY"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={cardName}
+                onChange={(e) => setCardName(e.target.value)}
+                placeholder="Name as it appears on card"
+                className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">CVC</label>
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="text"
-                inputMode="numeric"
-                value={cvc}
-                onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="123"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="checkbox"
+                checked={saveCard}
+                onChange={(e) => setSaveCard(e.target.checked)}
+                className="rounded border-gray-300"
               />
+              <span className="text-xs text-gray-600">Save card for future bookings</span>
+            </label>
+          </div>
+        )}
+
+        {/* PayPal */}
+        {method === 'paypal' && (
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-center space-y-3">
+            <p className="text-sm text-gray-600">
+              You'll be redirected to PayPal to complete your payment securely.
+            </p>
+            <div className="inline-flex items-center justify-center gap-1 px-5 py-2 rounded-full bg-yellow-400 text-sm font-bold text-blue-900">
+              Pay with <span className="font-extrabold ml-1">PayPal</span>
             </div>
           </div>
+        )}
 
-          {/* Cardholder name */}
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Cardholder name</label>
-            <input
-              type="text"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              placeholder="Name as it appears on card"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {/* Klarna */}
+        {method === 'klarna' && (
+          <div className="rounded-lg bg-pink-50 border border-pink-200 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-pink-200 text-pink-800 text-xs font-bold">Klarna</span>
+              <span className="text-sm font-medium text-gray-800">Pay in 3 interest-free installments</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs text-gray-600">
+              <div className="bg-white rounded-md p-2 border border-pink-100">
+                <div className="font-semibold text-gray-800 mb-0.5">Today</div>
+                <div>1st payment</div>
+              </div>
+              <div className="bg-white rounded-md p-2 border border-pink-100">
+                <div className="font-semibold text-gray-800 mb-0.5">30 days</div>
+                <div>2nd payment</div>
+              </div>
+              <div className="bg-white rounded-md p-2 border border-pink-100">
+                <div className="font-semibold text-gray-800 mb-0.5">60 days</div>
+                <div>3rd payment</div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400">No interest. No fees. Subject to Klarna approval.</p>
           </div>
+        )}
 
-          <p className="text-xs text-gray-400 flex items-center gap-1">
-            🔒 Your payment details are encrypted and secure.
-          </p>
+        {/* Security footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="flex items-center gap-1.5 text-xs text-gray-400">
+            <span>🔒</span> SSL encrypted · PCI DSS compliant
+          </span>
+          <span className="flex items-center gap-1">
+            <CardLogo brand="visa" />
+            <CardLogo brand="mc" />
+            <CardLogo brand="amex" />
+          </span>
         </div>
-      )}
-
-      {method === 'paypal' && (
-        <div className="text-center py-6 text-sm text-gray-500 border border-dashed border-gray-300 rounded-md">
-          You will be redirected to PayPal to complete your payment after confirming the booking.
-        </div>
-      )}
-
-      {method === 'bank' && (
-        <div className="space-y-2 text-sm text-gray-700 bg-gray-50 rounded-md p-4">
-          <p className="font-medium text-gray-900">Bank transfer details</p>
-          <p>Bank: <span className="font-medium">Landsbankinn</span></p>
-          <p>IBAN: <span className="font-medium">IS00 0000 0000 0000 0000 00</span></p>
-          <p>Reference: <span className="font-medium">Your booking ID (sent by email)</span></p>
-          <p className="text-gray-500 text-xs mt-2">Payment must be received within 3 business days to confirm your booking.</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
