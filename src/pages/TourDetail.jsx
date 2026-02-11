@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../CartContext';
 
 // ============================================================================
@@ -479,8 +479,7 @@ function Accordion({ title, children, defaultOpen = false }) {
 // 1. HERO
 // ============================================================================
 
-function TourHero({ tour, onAddToCart, added }) {
-  const [saved, setSaved] = useState(false);
+function TourHero({ tour }) {
   const isGuided = tour.tourType === 'guided';
 
   const formatDate = (d) => {
@@ -497,42 +496,25 @@ function TourHero({ tour, onAddToCart, added }) {
         <img src={tour.image} alt={tour.title} className="w-full h-full object-cover" />
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${isGuided ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-              {isGuided ? 'Guided tour' : 'Self-drive'}
+      <div className="mt-6">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${isGuided ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+            {isGuided ? 'Guided tour' : 'Self-drive'}
+          </span>
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+            {tour.durationDays} days / {tour.durationNights} nights
+          </span>
+          {tour.season && (
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+              {formatDate(tour.season.startDate)} – {formatDate(tour.season.endDate)}
             </span>
-            <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
-              {tour.durationDays} days / {tour.durationNights} nights
-            </span>
-            {tour.season && (
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
-                {formatDate(tour.season.startDate)} – {formatDate(tour.season.endDate)}
-              </span>
-            )}
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">{tour.title}</h1>
-          <p className="mt-2 text-2xl font-bold text-gray-900">
-            from <span className="text-blue-600">${tour.priceFrom}</span>
-            <span className="text-base font-normal text-gray-500"> / person</span>
-          </p>
+          )}
         </div>
-
-        <div className="flex flex-col sm:items-end gap-2 shrink-0">
-          <button
-            onClick={onAddToCart}
-            className={`px-6 py-3 rounded-md font-medium transition-colors text-white ${added ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-          >
-            {added ? '✓ Added to Cart' : 'Add to Cart'}
-          </button>
-          <button
-            onClick={() => setSaved(!saved)}
-            className={`border px-6 py-3 rounded-md font-medium transition-colors ${saved ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-          >
-            {saved ? '♥ Saved' : '♡ Save'}
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900">{tour.title}</h1>
+        <p className="mt-2 text-2xl font-bold text-gray-900">
+          from <span className="text-blue-600">${tour.priceFrom}</span>
+          <span className="text-base font-normal text-gray-500"> / person</span>
+        </p>
       </div>
     </div>
   );
@@ -1250,28 +1232,104 @@ function TourPreviewSummary({ tour }) {
 }
 
 // ============================================================================
+// BOOKING PANEL (right column)
+// ============================================================================
+
+function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, added, isEditing }) {
+  const [saved, setSaved] = useState(false);
+  const total = tour.priceFrom * participants;
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-24">
+      <div className="mb-4">
+        <span className="text-sm text-gray-500">from</span>
+        <div>
+          <span className="text-3xl font-bold text-gray-900">${tour.priceFrom}</span>
+          <span className="text-gray-500 ml-1 text-sm">/ person</span>
+        </div>
+      </div>
+
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Travelers</label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setParticipants(Math.max(1, participants - 1))}
+            className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-lg font-medium"
+          >
+            −
+          </button>
+          <span className="w-8 text-center font-medium text-lg">{participants}</span>
+          <button
+            onClick={() => setParticipants(participants + 1)}
+            className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 text-lg font-medium"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
+        <span className="text-gray-600">{participants} × ${tour.priceFrom}</span>
+        <span className="font-bold text-gray-900 text-lg">${total}</span>
+      </div>
+
+      <button
+        onClick={onAddToCart}
+        className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
+          added ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+        }`}
+      >
+        {added ? '✓ Updated' : isEditing ? `Update Cart — $${total}` : `Add to Cart — $${total}`}
+      </button>
+
+      <button
+        onClick={() => setSaved(!saved)}
+        className={`mt-2 w-full border py-3 px-4 rounded-md font-medium transition-colors ${
+          saved ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        {saved ? '♥ Saved' : '♡ Save'}
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
 // MAIN EXPORT
 // ============================================================================
 
 export default function TourDetail() {
   const { tourId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const { addToCart, updateCartItem, cartItems } = useCart();
+
+  const editItemId = searchParams.get('edit');
+  const existingItem = editItemId ? cartItems.find((item) => item.id === editItemId) : null;
+  const isEditing = !!existingItem;
 
   const tour = TOUR_DATA[tourId];
 
   const [added, setAdded] = useState(false);
+  const [participants, setParticipants] = useState(1);
+
+  useEffect(() => {
+    if (existingItem) {
+      setParticipants(existingItem.participants || 1);
+    }
+  }, [existingItem]);
 
   const handleAddToCart = () => {
-    addToCart({
-      id: `tour-${Date.now()}`,
+    const cartItem = {
+      id: isEditing ? existingItem.id : `tour-${Date.now()}`,
       type: 'tourPackage',
+      tourId,
       name: tour.title,
       image: tour.image,
       shortDescription: tour.highlights?.[0] || '',
       tourType: tour.tourType,
       days: tour.durationDays,
-      participants: 1,
+      participants,
       pricePerPerson: tour.priceFrom,
       startDate: tour.departures?.[0]?.date || tour.season?.startDate || '',
       endDate: '',
@@ -1281,9 +1339,16 @@ export default function TourDetail() {
           .map((a) => ({ name: a.title, requiresShoeSize: false }))
       ) || [],
       needsInfo: true,
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    };
+
+    if (isEditing) {
+      updateCartItem(existingItem.id, cartItem);
+      navigate('/checkout');
+    } else {
+      addToCart(cartItem);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
   };
 
   if (!tour) {
@@ -1300,71 +1365,79 @@ export default function TourDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 pb-16">
+    <div className="max-w-5xl mx-auto px-4 py-8 pb-16">
       {/* Breadcrumb */}
       <nav className="text-sm mb-6">
         <Link to="/tours" className="text-gray-500 hover:text-gray-700">Tours</Link>
         <span className="mx-2 text-gray-400">/</span>
         <span className="text-gray-900">{tour.title}</span>
       </nav>
-        {/* 1 — Hero */}
-        <TourHero tour={tour} onAddToCart={handleAddToCart} added={added} />
 
-        {/* 2 — Key info */}
-        <TourKeyInfo tour={tour} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left column — main content */}
+        <div className="lg:col-span-2">
+          {/* 1 — Hero */}
+          <TourHero tour={tour} />
 
-        {/* 3 — Highlights */}
-        <TourHighlights highlights={tour.highlights} />
+          {/* 2 — Key info */}
+          <TourKeyInfo tour={tour} />
 
-        {/* 4 — Inclusions */}
-        <TourInclusions
-          included={tour.included}
-          extraIncluded={tour.extraIncluded}
-          notIncluded={tour.notIncluded}
-        />
+          {/* 3 — Highlights */}
+          <TourHighlights highlights={tour.highlights} />
 
-        {/* 5 — Bring with you */}
-        <TourBringWithYou items={tour.bringWithYou} />
+          {/* 4 — Inclusions */}
+          <TourInclusions
+            included={tour.included}
+            extraIncluded={tour.extraIncluded}
+            notIncluded={tour.notIncluded}
+          />
 
-        {/* 6 — Conditions */}
-        <TourConditions conditions={tour.conditions} />
+          {/* 5 — Bring with you */}
+          <TourBringWithYou items={tour.bringWithYou} />
 
-        {/* 7 — Preferences */}
-        <TourPreferences preferences={tour.preferences} />
+          {/* 6 — Conditions */}
+          <TourConditions conditions={tour.conditions} />
 
-        {/* 8 — Route */}
-        <TourRoute route={tour.route} />
+          {/* 7 — Preferences */}
+          <TourPreferences preferences={tour.preferences} />
 
-        {/* 9 — Accommodations */}
-        <TourAccommodations accommodationsByStop={tour.accommodationsByStop} />
+          {/* 8 — Route */}
+          <TourRoute route={tour.route} />
 
-        {/* 10 — Transport */}
-        <TourTransport transport={tour.transport} />
+          {/* 9 — Accommodations */}
+          <TourAccommodations accommodationsByStop={tour.accommodationsByStop} />
 
-        {/* 11 — Departures */}
-        <TourDepartures departures={tour.departures} />
+          {/* 10 — Transport */}
+          <TourTransport transport={tour.transport} />
 
-        {/* 12 — Itinerary */}
-        <TourItinerary itinerary={tour.itinerary} />
+          {/* 11 — Departures */}
+          <TourDepartures departures={tour.departures} />
 
-        {/* 13 — Media */}
-        <TourMedia media={tour.media} />
+          {/* 12 — Itinerary */}
+          <TourItinerary itinerary={tour.itinerary} />
 
-        {/* 14 — Extras */}
-        <TourExtras extrasByCategory={tour.extrasByCategory} />
+          {/* 13 — Media */}
+          <TourMedia media={tour.media} />
 
-        {/* 15 — Preview summary */}
-        <TourPreviewSummary tour={tour} />
+          {/* 14 — Extras */}
+          <TourExtras extrasByCategory={tour.extrasByCategory} />
 
-        {/* Bottom CTA */}
-        <div className="mt-10 flex gap-3">
-          <button
-            onClick={handleAddToCart}
-            className={`flex-1 text-white px-6 py-4 rounded-md font-medium text-lg transition-colors ${added ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-          >
-            {added ? `✓ Added to Cart` : `Add to Cart — from $${tour.priceFrom}/person`}
-          </button>
+          {/* 15 — Preview summary */}
+          <TourPreviewSummary tour={tour} />
         </div>
+
+        {/* Right column — booking panel */}
+        <div className="lg:col-span-1">
+          <TourBookingPanel
+            tour={tour}
+            participants={participants}
+            setParticipants={setParticipants}
+            onAddToCart={handleAddToCart}
+            added={added}
+            isEditing={isEditing}
+          />
+        </div>
+      </div>
     </div>
   );
 }

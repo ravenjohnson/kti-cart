@@ -193,6 +193,8 @@ export default function Checkout() {
       navigate(`/car-rentals/${carId}?edit=${item.id}`);
     } else if (item.type === 'activity' && item.activityId) {
       navigate(`/activities/${item.activityId}?edit=${item.id}`);
+    } else if (item.type === 'tourPackage' && item.tourId) {
+      navigate(`/tours/${item.tourId}?edit=${item.id}`);
     }
   };
 
@@ -1015,6 +1017,136 @@ function RequirementsForm({ requirements, people, onUpdatePerson }) {
 }
 
 // ============================================================================
+// PAYMENT FORM COMPONENT
+// ============================================================================
+
+function PaymentForm() {
+  const [method, setMethod] = React.useState('card');
+  const [cardNumber, setCardNumber] = React.useState('');
+  const [expiry, setExpiry] = React.useState('');
+  const [cvc, setCvc] = React.useState('');
+  const [cardName, setCardName] = React.useState('');
+
+  const formatCardNumber = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  const formatExpiry = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) return digits.slice(0, 2) + ' / ' + digits.slice(2);
+    return digits;
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <h3 className="font-semibold text-gray-900 mb-4">Payment</h3>
+
+      {/* Method tabs */}
+      <div className="flex gap-2 mb-4">
+        {[
+          { id: 'card', label: '💳 Card' },
+          { id: 'paypal', label: '🅿 PayPal' },
+          { id: 'bank', label: '🏦 Bank transfer' },
+        ].map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setMethod(m.id)}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+              method === m.id
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {method === 'card' && (
+        <div className="space-y-3">
+          {/* Card number */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Card number</label>
+            <div className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                placeholder="1234 5678 9012 3456"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 select-none">
+                VISA · MC
+              </span>
+            </div>
+          </div>
+
+          {/* Expiry + CVC */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Expiry date</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={expiry}
+                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                placeholder="MM / YY"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">CVC</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={cvc}
+                onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="123"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Cardholder name */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Cardholder name</label>
+            <input
+              type="text"
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
+              placeholder="Name as it appears on card"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <p className="text-xs text-gray-400 flex items-center gap-1">
+            🔒 Your payment details are encrypted and secure.
+          </p>
+        </div>
+      )}
+
+      {method === 'paypal' && (
+        <div className="text-center py-6 text-sm text-gray-500 border border-dashed border-gray-300 rounded-md">
+          You will be redirected to PayPal to complete your payment after confirming the booking.
+        </div>
+      )}
+
+      {method === 'bank' && (
+        <div className="space-y-2 text-sm text-gray-700 bg-gray-50 rounded-md p-4">
+          <p className="font-medium text-gray-900">Bank transfer details</p>
+          <p>Bank: <span className="font-medium">Landsbankinn</span></p>
+          <p>IBAN: <span className="font-medium">IS00 0000 0000 0000 0000 00</span></p>
+          <p>Reference: <span className="font-medium">Your booking ID (sent by email)</span></p>
+          <p className="text-gray-500 text-xs mt-2">Payment must be received within 3 business days to confirm your booking.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // REVIEW STEP COMPONENT (Step 5)
 // ============================================================================
 
@@ -1030,9 +1162,9 @@ function ReviewStep({
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Review & Pay</h2>
 
-      {/* Lead Booker */}
+      {/* Your Details */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-3">Lead Booker</h3>
+        <h3 className="font-semibold text-gray-900 mb-3">Your details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input
             type="text"
@@ -1064,6 +1196,9 @@ function ReviewStep({
           />
         </div>
       </div>
+
+      {/* Payment */}
+      <PaymentForm />
 
       {/* Trip Timeline */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
