@@ -496,15 +496,18 @@ function TourBasics({ tour }) {
   if (!tourType) return null;
   return (
     <section className="mt-10">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Description</h2>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">Description</h2>
+        <div className="mb-8">
+        {description && <p className="text-gray-800 pt-2 border-t border-gray-100 leading-relaxed">{description}</p>}
+        </div>
       <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 text-sm">
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <span className="text-gray-500 w-16 shrink-0">Tour type</span>
           <span className={`px-3 py-1 rounded-full font-medium ${tourType === 'guided' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
             {tourType === 'guided' ? 'Guided' : 'Self-drive'}
           </span>
-        </div>
-        {tourType === 'guided' && startLocation && (
+        </div> */}
+        {/* {tourType === 'guided' && startLocation && (
           <div className="flex items-center gap-3">
             <span className="text-gray-500 w-32 shrink-0">Departs from</span>
             <span className="font-medium text-gray-900">{startLocation}</span>
@@ -517,13 +520,13 @@ function TourBasics({ tour }) {
         )}
         {totalDays && (
           <div className="flex items-center gap-3">
-            <span className="text-gray-500 w-32 shrink-0">Duration</span>
+            <span className="text-gray-500 w-16 shrink-0">Duration</span>
             <span className="font-medium text-gray-900">{totalDays} days / {totalDays - 1} nights</span>
           </div>
-        )}
-        {description && <p className="text-gray-600 pt-2 border-t border-gray-100 leading-relaxed">{description}</p>}
+        )} */}
+        {/* {description && <p className="text-gray-600 pt-2 border-t border-gray-100 leading-relaxed">{description}</p>} */}
         {(included.length > 0 || prefGroups.length > 0) && (
-          <div className="pt-3 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Included */}
             {included.length > 0 && (
               <div>
@@ -536,7 +539,7 @@ function TourBasics({ tour }) {
                   ))}
                 </ul>
                 {extraIncluded.length > 0 && (
-                <div className="mt-4">
+                <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="font-semibold text-gray-900 mb-2 text-sm">Pickup & dropoff</p>
                   <div className="mt-3 pl-3 border-l-2 border-dashed border-gray-300">
                     {extraIncluded.map((item, i) => (
@@ -552,7 +555,7 @@ function TourBasics({ tour }) {
             {/* Preferences */}
             {prefGroups.length > 0 && (
               <div>
-                <p className="font-semibold text-gray-900 mb-2 text-sm">Summary</p>
+                <p className="font-semibold text-gray-900 mb-2 text-sm opacity-0">Summary (filtering only?)</p>
                 <div className="space-y-2">
                   {prefGroups.map((group) => (
                     <div key={group.label} className="flex items-start gap-2">
@@ -820,7 +823,7 @@ function TourDays({ days, daySelections, onSelectAccommodation, onToggleActivity
           const sel = daySelections[day.dayNumber] || { accommodation: null, activities: [] };
 
           return (
-            <div key={day.dayNumber} className="border-t border-gray-100 pt-8 first:border-t-0 first:pt-0">
+            <div key={day.dayNumber} id={`day-${day.dayNumber}`} className="border-t border-gray-100 pt-8 first:border-t-0 first:pt-0">
               {/* Day header */}
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-12 h-12 bg-blue-600 text-white rounded-lg flex flex-col items-center justify-center shrink-0 shadow-sm">
@@ -1314,6 +1317,20 @@ export default function TourDetail() {
       }
     }
   }, [existingItem]);
+
+  // Scroll to day 1 when arriving in edit mode
+  useEffect(() => {
+    if (isEditing) {
+      const el = document.getElementById('day-1');
+      if (el) {
+        // Offset accounts for the sticky Layout header (~56px) + breathing room
+        setTimeout(() => {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }, 150);
+      }
+    }
+  }, [isEditing]);
 
   const handleSelectAccommodation = (dayNumber, hotel) => {
     setDaySelections((prev) => ({

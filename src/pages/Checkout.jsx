@@ -194,7 +194,7 @@ export default function Checkout() {
     } else if (item.type === 'activity' && item.activityId) {
       navigate(`/activities/${item.activityId}?edit=${item.id}`);
     } else if (item.type === 'tourPackage' && item.tourId) {
-      navigate(`/tours/${item.tourId}?edit=${item.id}`);
+      navigate(`/tours/${item.tourId}?edit=${item.id}#day-1`);
     }
   };
 
@@ -217,7 +217,7 @@ export default function Checkout() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="text-2xl font-bold text-gray-900">
-              Iceland Travel Checkout
+              KTI Checkout
             </Link>
 
             {/* Desktop Navigation */}
