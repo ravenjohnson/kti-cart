@@ -218,7 +218,7 @@ const TOUR_DATA = {
     wayOfTravel: ['Small group'],
     interests: ['Waterfalls', 'Glaciers', 'Beaches'],
     regionTags: ['South Iceland'],
-    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'All transport included. Minibus picks up from Reykjavík hotel each morning.' },
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'All transport included. Minibus picks up from Reykjavík hotel each morning.', vehicle: { type: 'Minibus', capacity: 12, image: 'https://picsum.photos/seed/minibus-tour-iceland/400/280' } },
     availabilityLabels: ['Guided'],
     media: { images: ['https://picsum.photos/seed/sc-waterfall/600/400', 'https://picsum.photos/seed/sc-glacier/600/400', 'https://picsum.photos/seed/sc-beach/600/400'] },
     extrasByCategory: [],
@@ -298,7 +298,7 @@ const TOUR_DATA = {
     bringWithYou: ['Warm layers', 'Camera'],
     conditions: { cancellation: 'Free cancellation up to 10 days before.', importantInfo: 'Suitable for all fitness levels.', terms: '' },
     travelStyle: ['Comfort'], wayOfTravel: ['Small group'], interests: ['Geysers', 'Hot Springs'], regionTags: ['South Iceland'],
-    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Minibus transport included.' },
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Minibus transport included.', vehicle: { type: 'Minibus', capacity: 15, image: 'https://picsum.photos/seed/gc-minibus/400/280' } },
     availabilityLabels: ['Guided'],
     media: { images: ['https://picsum.photos/seed/gc-geyser/600/400'] },
     extrasByCategory: [],
@@ -370,7 +370,7 @@ const TOUR_DATA = {
     bringWithYou: ['Very warm jacket', 'Thermals', 'Gloves & hat'],
     conditions: { cancellation: 'Aurora sightings not guaranteed. No refund for weather issues.', importantInfo: 'Ice cave tours depend on glacier safety.', terms: '' },
     travelStyle: ['Adventure'], wayOfTravel: ['Small group'], interests: ['Northern Lights', 'Ice Caves'], regionTags: ['South Iceland'],
-    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Super jeep transport included.' },
+    transport: { allowCarRental: false, advisedAllDays: false, allowedCarCategories: 'all', notes: 'Super jeep transport included.', vehicle: { type: 'Super Jeep', capacity: 8, image: 'https://picsum.photos/seed/superjeep-highland/400/280' } },
     availabilityLabels: ['Guided'],
     media: { images: ['https://picsum.photos/seed/nl-aurora/600/400', 'https://picsum.photos/seed/nl-icecave/600/400'] },
     extrasByCategory: [],
@@ -429,11 +429,11 @@ function Accordion({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-gray-200 last:border-b-0">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-4 text-left font-medium text-gray-900 hover:text-blue-600">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-4 px-4 text-left font-medium text-gray-900 hover:text-blue-600">
         <span>{title}</span>
         <span className="text-gray-400 text-sm ml-4">{open ? '▲' : '▼'}</span>
       </button>
-      {open && <div className="pb-4 text-sm text-gray-700 leading-relaxed">{children}</div>}
+      {open && <div className="pb-4 px-4 text-sm text-gray-700 leading-relaxed">{children}</div>}
     </div>
   );
 }
@@ -499,7 +499,7 @@ function TourBasics({ tour }) {
       <h2 className="text-2xl font-bold text-gray-900 mb-4">Description</h2>
       <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3 text-sm">
         <div className="flex items-center gap-3">
-          <span className="text-gray-500 w-32 shrink-0">Tour type</span>
+          <span className="text-gray-500 w-16 shrink-0">Tour type</span>
           <span className={`px-3 py-1 rounded-full font-medium ${tourType === 'guided' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
             {tourType === 'guided' ? 'Guided' : 'Self-drive'}
           </span>
@@ -536,14 +536,16 @@ function TourBasics({ tour }) {
                   ))}
                 </ul>
                 {extraIncluded.length > 0 && (
+                <div className="mt-4">
+                <p className="font-semibold text-gray-900 mb-2 text-sm">Pickup & dropoff</p>
                   <div className="mt-3 pl-3 border-l-2 border-dashed border-gray-300">
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Also included</p>
                     {extraIncluded.map((item, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm text-gray-600 mb-1">
                         <span className="text-green-500 shrink-0">✓</span>{item}
                       </div>
                     ))}
                   </div>
+                </div>
                 )}
               </div>
             )}
@@ -1076,7 +1078,7 @@ function PanelSelectionSummary({ days, daySelections }) {
       onClick={onToggle}
       className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-gray-100 text-left"
     >
-      <span className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide">
+      <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">
         {label}
         {count > 0 && (
           <span className="ml-1.5 text-blue-600 normal-case font-normal tracking-normal">
@@ -1121,24 +1123,26 @@ function PanelSelectionSummary({ days, daySelections }) {
       <GroupHeader label="Activities" count={allActivities} open={activitiesOpen} onToggle={() => setActivitiesOpen(!activitiesOpen)} />
       {activitiesOpen && (
         <div className="divide-y divide-gray-100">
-          {activityDaysWithData.length === 0 ? (
-            <div className="px-3 py-2 text-gray-400 italic">No activities selected</div>
-          ) : (
-            activityDaysWithData.map((day) => {
-              const acts = daySelections[day.dayNumber].activities;
-              return (
-                <div key={day.dayNumber} className="px-3 py-2 space-y-0.5">
-                  <div className="text-[12px] font-semibold text-gray-500 mb-1">
-                    Day {day.dayNumber} · {fmtShort(day.date)}
-                  </div>
-                  <div className="text-[12px] text-gray-500 mb-1">📍 {day.city}</div>
-                  {acts.map((act) => (
-                    <div key={act.id} className="text-gray-800 leading-tight truncate">{act.name}</div>
-                  ))}
+          {days.map((day) => {
+            const acts = daySelections[day.dayNumber]?.activities || [];
+            return (
+              <div key={day.dayNumber} className="px-3 py-2 space-y-0.5">
+                <div className="text-[12px] font-semibold text-gray-500 mb-1">
+                  Day {day.dayNumber} · {fmtShort(day.date)}
                 </div>
-              );
-            })
-          )}
+                {acts.length > 0 ? (
+                  <>
+                    <div className="text-[12px] text-gray-500 mb-1">📍 {day.city}</div>
+                    {acts.map((act) => (
+                      <div key={act.id} className="text-gray-800 leading-tight truncate">{act.name}</div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="text-gray-400 italic">Not selected</div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -1218,6 +1222,31 @@ function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, ad
             </div>
             {tour.transport.notes && (
               <p className="mt-3 text-xs text-amber-700 bg-amber-50 rounded p-2 leading-relaxed">{tour.transport.notes}</p>
+            )}
+          </div>
+        );
+      })()}
+
+      {tour.tourType === 'guided' && tour.transport?.vehicle && (() => {
+        const v = tour.transport.vehicle;
+        return (
+          <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-700 mb-3">Transport</p>
+            <div className="flex gap-3 items-center">
+              <div className="w-20 h-14 rounded overflow-hidden shrink-0 bg-gray-100">
+                <img src={v.image} alt={v.type} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs px-1.5 py-0.5 bg-green-50 text-green-700 rounded font-medium">{v.type}</span>
+                  <span className="text-xs text-gray-400">Included</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-900">All transport included</p>
+                <p className="text-xs text-gray-500 mt-0.5">Up to {v.capacity} passengers</p>
+              </div>
+            </div>
+            {tour.transport.notes && (
+              <p className="mt-3 text-xs text-blue-700 bg-blue-50 rounded p-2 leading-relaxed">{tour.transport.notes}</p>
             )}
           </div>
         );
@@ -1353,7 +1382,7 @@ export default function TourDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 pb-16">
+    <div className="max-w-7xl mx-auto px-4 py-8 pb-16">
       {/* Breadcrumb */}
       <nav className="text-sm mb-6">
         <Link to="/tours" className="text-gray-500 hover:text-gray-700">Tours</Link>
@@ -1375,7 +1404,7 @@ export default function TourDetail() {
             onToggleActivity={handleToggleActivity}
           />
 
-          <TourTransport transport={tour.transport} />
+          {tour.tourType !== 'self_drive' && <TourTransport transport={tour.transport} />}
           <TourBringWithYou items={tour.bringWithYou} />
           <TourConditions conditions={tour.conditions} />
           <TourMedia media={tour.media} />

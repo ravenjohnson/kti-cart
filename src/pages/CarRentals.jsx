@@ -274,19 +274,6 @@ export default function CarRentals() {
           </select>
         </FilterField>
 
-        <FilterField label="Driver Age">
-          <select
-            value={filters.driverAge}
-            onChange={setE('driverAge')}
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Any age</option>
-            <option value="20">20 – 25</option>
-            <option value="25">25 – 30</option>
-            <option value="30">30 – 65</option>
-            <option value="65">65+</option>
-          </select>
-        </FilterField>
       </FilterBar>
 
       {filtered.length === 0 ? (

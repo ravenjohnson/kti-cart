@@ -342,13 +342,6 @@ export default function Activities() {
           />
         </FilterField>
 
-        <FilterField label="Category">
-          <PillSelect
-            options={['Adventure', 'Nature', 'Culture', 'Wellness', 'Family']}
-            value={filters.category}
-            onChange={set('category')}
-          />
-        </FilterField>
       </FilterBar>
 
       {filtered.length === 0 ? (

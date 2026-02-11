@@ -416,7 +416,7 @@ export default function ActivityDetail() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="text-sm mb-6">
         <Link to="/activities" className="text-gray-500 hover:text-gray-700">Activities</Link>

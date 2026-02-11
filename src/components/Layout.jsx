@@ -28,7 +28,7 @@ export default function Layout({ children }) {
                     : 'text-gray-700 hover:text-gray-900'
                 }`}
               >
-                Tours & Packages
+                Tours
               </Link>
               <Link
                 to="/activities"
