@@ -1265,10 +1265,69 @@ function PanelSelectionSummary({ days, daySelections }) {
 // BOOKING PANEL  (right column, sticky)
 // ============================================================================
 
-function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, added, isEditing, daySelections }) {
+function TourBookingPanel({ tour, roomSelections, setRoomSelections, participants, onAddToCart, added, isEditing, daySelections }) {
   const [saved, setSaved] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const total = tour.priceFrom * participants;
+
+  const addRoom = () => {
+    setRoomSelections((prev) => [
+      ...prev,
+      { adults: 1, children: 0, childAges: [], breakfast: false },
+    ]);
+  };
+
+  const removeRoom = () => {
+    setRoomSelections((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  };
+
+  const updateRoom = (roomIndex, updates) => {
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => (idx === roomIndex ? { ...room, ...updates } : room)),
+    );
+  };
+
+  const setAdults = (roomIndex, value) => {
+    updateRoom(roomIndex, { adults: Math.max(1, value) });
+  };
+
+  const setChildren = (roomIndex, value) => {
+    const children = Math.max(0, value);
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => {
+        if (idx !== roomIndex) return room;
+        const childAges = Array.from(
+          { length: children },
+          (_, ageIdx) => {
+            const existing = Number(room.childAges?.[ageIdx]);
+            return Number.isFinite(existing) ? existing : 0;
+          },
+        );
+        return { ...room, children, childAges };
+      }),
+    );
+  };
+
+  const setChildAge = (roomIndex, childIndex, age) => {
+    const normalizedAge = Math.min(17, Math.max(0, Number(age) || 0));
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => {
+        if (idx !== roomIndex) return room;
+        const childAges = [...(room.childAges || [])];
+        childAges[childIndex] = normalizedAge;
+        return { ...room, childAges };
+      }),
+    );
+  };
+
+  const toggleBreakfast = (roomIndex) => {
+    setRoomSelections((prev) =>
+      prev.map((room, idx) =>
+        idx === roomIndex ? { ...room, breakfast: !room.breakfast } : room,
+      ),
+    );
+  };
+
   return (
     <div className="sticky top-6">
       <div className="bg-white border border-gray-200 rounded-lg p-5">
@@ -1288,17 +1347,123 @@ function TourBookingPanel({ tour, participants, setParticipants, onAddToCart, ad
           />
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-700">Travelers</span>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-gray-700">Rooms</span>
           <div className="flex items-center gap-2">
-            <button onClick={() => setParticipants(Math.max(1, participants - 1))} className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none">−</button>
-            <span className="w-6 text-center font-medium text-gray-900">{participants}</span>
-            <button onClick={() => setParticipants(participants + 1)} className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none">+</button>
+            <button
+              onClick={removeRoom}
+              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+            >
+              −
+            </button>
+            <span className="w-6 text-center font-medium text-gray-900">{roomSelections.length}</span>
+            <button
+              onClick={addRoom}
+              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+            >
+              +
+            </button>
           </div>
         </div>
 
+        <div className="space-y-3 mb-4">
+          {roomSelections.map((room, roomIndex) => (
+            <div key={`room-${roomIndex}`} className="border border-gray-200 rounded-md p-3">
+              <p className="text-sm font-semibold text-gray-800 mb-2">Room: {roomIndex + 1}</p>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700">Adults</p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setAdults(roomIndex, (room.adults || 1) - 1)}
+                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center font-medium text-gray-900">{room.adults || 1}</span>
+                    <button
+                      onClick={() => setAdults(roomIndex, (room.adults || 1) + 1)}
+                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-700">Children</p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setChildren(roomIndex, (room.children || 0) - 1)}
+                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center font-medium text-gray-900">{room.children || 0}</span>
+                    <button
+                      onClick={() => setChildren(roomIndex, (room.children || 0) + 1)}
+                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {room.children > 0 && (
+                <div className="mt-3 space-y-2">
+                  {(room.childAges || []).map((age, childIndex) => (
+                    <div
+                      key={`room-${roomIndex}-child-${childIndex}`}
+                      className="flex items-center justify-between"
+                    >
+                      <label className="text-sm text-gray-500">
+                        Age for child {childIndex + 1}
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setChildAge(roomIndex, childIndex, (age || 0) - 1)}
+                          className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                        >
+                          −
+                        </button>
+                        <span className="w-6 text-center font-medium text-gray-900">{Number(age) || 0}</span>
+                        <button
+                          onClick={() => setChildAge(roomIndex, childIndex, (age || 0) + 1)}
+                          className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-gray-600">Breakfast</span>
+                <button
+                  onClick={() => toggleBreakfast(roomIndex)}
+                  className={`relative inline-flex w-11 h-6 rounded-full border transition-colors ${
+                    room.breakfast
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'bg-gray-200 border-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`absolute left-0.5 top-0.5 h-5 w-5 bg-white rounded-full transition-transform ${
+                      room.breakfast ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
-          <span className="text-gray-600">{participants} × ${tour.priceFrom}</span>
+          <span className="text-gray-600">{participants} travelers × ${tour.priceFrom}</span>
           <span className="font-bold text-gray-900 text-lg">${total}</span>
         </div>
 
@@ -1403,7 +1568,9 @@ export default function TourDetail() {
   const tour = TOUR_DATA[tourId];
 
   const [added, setAdded] = useState(false);
-  const [participants, setParticipants] = useState(1);
+  const [roomSelections, setRoomSelections] = useState([
+    { adults: 1, children: 0, childAges: [], breakfast: false },
+  ]);
   const [daySelections, setDaySelections] = useState({});
   const [carRental, setCarRental] = useState({
     pickupLocation: CAR_RENTAL_LOCATIONS[0],
@@ -1429,7 +1596,18 @@ export default function TourDetail() {
   // Load from existing cart item (edit mode)
   useEffect(() => {
     if (existingItem) {
-      setParticipants(existingItem.participants || 1);
+      if (Array.isArray(existingItem.roomSelections) && existingItem.roomSelections.length > 0) {
+        setRoomSelections(existingItem.roomSelections);
+      } else {
+        setRoomSelections([
+          {
+            adults: Math.max(existingItem.participants || 1, 1),
+            children: 0,
+            childAges: [],
+            breakfast: false,
+          },
+        ]);
+      }
       if (existingItem.daySelections) {
         setDaySelections(existingItem.daySelections);
       }
@@ -1438,6 +1616,14 @@ export default function TourDetail() {
       }
     }
   }, [existingItem]);
+
+  const participants = Math.max(
+    1,
+    roomSelections.reduce(
+      (sum, room) => sum + (Number(room.adults) || 0) + (Number(room.children) || 0),
+      0,
+    ),
+  );
 
   // Scroll to day 1 when arriving in edit mode
   useEffect(() => {
@@ -1487,6 +1673,7 @@ export default function TourDetail() {
       tourType: tour.tourType,
       days: tour.totalDays,
       participants,
+      roomSelections,
       pricePerPerson: tour.priceFrom,
       startDate: tour.days?.[0]?.date || tour.season?.startDate || '',
       endDate: tour.days?.[tour.days.length - 1]?.date || '',
@@ -1562,8 +1749,9 @@ export default function TourDetail() {
         <div className="lg:col-span-1">
           <TourBookingPanel
             tour={tour}
+            roomSelections={roomSelections}
+            setRoomSelections={setRoomSelections}
             participants={participants}
-            setParticipants={setParticipants}
             onAddToCart={handleAddToCart}
             added={added}
             isEditing={isEditing}
