@@ -800,9 +800,218 @@ function ActivityCard({ activity, selected, onToggle, onLearnMore }) {
   );
 }
 
-function TourDays({ days, daySelections, onSelectAccommodation, onToggleActivity }) {
+function cloneRoomSelections(rooms = []) {
+  return rooms.map((room) => ({
+    adults: Math.max(1, Number(room.adults) || 1),
+    children: Math.max(0, Number(room.children) || 0),
+    childAges: Array.from(
+      { length: Math.max(0, Number(room.children) || 0) },
+      (_, idx) => Math.max(0, Math.min(17, Number(room.childAges?.[idx]) || 0)),
+    ),
+    breakfast: !!room.breakfast,
+  }));
+}
+
+function countRoomTravelers(rooms = []) {
+  return Math.max(
+    1,
+    rooms.reduce(
+      (sum, room) => sum + (Number(room.adults) || 0) + (Number(room.children) || 0),
+      0,
+    ),
+  );
+}
+
+function RoomSelectionEditor({ roomSelections, setRoomSelections, compact = false }) {
+  const addRoom = () => {
+    setRoomSelections((prev) => [
+      ...prev,
+      { adults: 1, children: 0, childAges: [], breakfast: false },
+    ]);
+  };
+
+  const removeRoom = () => {
+    setRoomSelections((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  };
+
+  const updateRoom = (roomIndex, updates) => {
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => (idx === roomIndex ? { ...room, ...updates } : room)),
+    );
+  };
+
+  const setAdults = (roomIndex, value) => {
+    updateRoom(roomIndex, { adults: Math.max(1, value) });
+  };
+
+  const setChildren = (roomIndex, value) => {
+    const children = Math.max(0, value);
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => {
+        if (idx !== roomIndex) return room;
+        const childAges = Array.from(
+          { length: children },
+          (_, ageIdx) => {
+            const existing = Number(room.childAges?.[ageIdx]);
+            return Number.isFinite(existing) ? existing : 0;
+          },
+        );
+        return { ...room, children, childAges };
+      }),
+    );
+  };
+
+  const setChildAge = (roomIndex, childIndex, age) => {
+    const normalizedAge = Math.min(17, Math.max(0, Number(age) || 0));
+    setRoomSelections((prev) =>
+      prev.map((room, idx) => {
+        if (idx !== roomIndex) return room;
+        const childAges = [...(room.childAges || [])];
+        childAges[childIndex] = normalizedAge;
+        return { ...room, childAges };
+      }),
+    );
+  };
+
+  const toggleBreakfast = (roomIndex) => {
+    setRoomSelections((prev) =>
+      prev.map((room, idx) =>
+        idx === roomIndex ? { ...room, breakfast: !room.breakfast } : room,
+      ),
+    );
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm text-gray-700">Rooms</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={removeRoom}
+            className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+          >
+            −
+          </button>
+          <span className="w-6 text-center font-medium text-gray-900">{roomSelections.length}</span>
+          <button
+            onClick={addRoom}
+            className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div className={`space-y-3 ${compact ? '' : 'mb-4'}`}>
+        {roomSelections.map((room, roomIndex) => (
+          <div key={`room-${roomIndex}`} className="border border-gray-200 rounded-md p-3 bg-white">
+            <p className="text-sm font-semibold text-gray-800 mb-2">Room: {roomIndex + 1}</p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-700">Adults</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setAdults(roomIndex, (room.adults || 1) - 1)}
+                    className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center font-medium text-gray-900">{room.adults || 1}</span>
+                  <button
+                    onClick={() => setAdults(roomIndex, (room.adults || 1) + 1)}
+                    className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-700">Children</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setChildren(roomIndex, (room.children || 0) - 1)}
+                    className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center font-medium text-gray-900">{room.children || 0}</span>
+                  <button
+                    onClick={() => setChildren(roomIndex, (room.children || 0) + 1)}
+                    className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {room.children > 0 && (
+              <div className="mt-3 space-y-2">
+                {(room.childAges || []).map((age, childIndex) => (
+                  <div
+                    key={`room-${roomIndex}-child-${childIndex}`}
+                    className="flex items-center justify-between"
+                  >
+                    <label className="text-sm text-gray-500">
+                      Age for child {childIndex + 1}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setChildAge(roomIndex, childIndex, (age || 0) - 1)}
+                        className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                      >
+                        −
+                      </button>
+                      <span className="w-6 text-center font-medium text-gray-900">{Number(age) || 0}</span>
+                      <button
+                        onClick={() => setChildAge(roomIndex, childIndex, (age || 0) + 1)}
+                        className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xs text-gray-600">Breakfast</span>
+              <button
+                onClick={() => toggleBreakfast(roomIndex)}
+                className={`relative inline-flex w-11 h-6 rounded-full border transition-colors ${
+                  room.breakfast
+                    ? 'bg-blue-600 border-blue-600'
+                    : 'bg-gray-200 border-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute left-0.5 top-0.5 h-5 w-5 bg-white rounded-full transition-transform ${
+                    room.breakfast ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function TourDays({
+  days,
+  daySelections,
+  onSelectAccommodation,
+  onToggleActivity,
+  defaultRoomSelections,
+  onSetAccommodationRooms,
+}) {
   if (!days?.length) return null;
   const [modalActivity, setModalActivity] = useState(null);
+  const [openRoomEditorByDay, setOpenRoomEditorByDay] = useState({});
 
   const formatDayDate = (dateStr) => {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -821,6 +1030,13 @@ function TourDays({ days, daySelections, onSelectAccommodation, onToggleActivity
         {days.map((day) => {
           const isLastDay = day.dayNumber === lastDayNumber;
           const sel = daySelections[day.dayNumber] || { accommodation: null, activities: [] };
+          const hasDayRoomOverride =
+            Array.isArray(sel.accommodationRooms) && sel.accommodationRooms.length > 0;
+          const effectiveRooms = hasDayRoomOverride
+            ? sel.accommodationRooms
+            : defaultRoomSelections;
+          const effectiveTravelers = countRoomTravelers(effectiveRooms);
+          const isRoomEditorOpen = !!openRoomEditorByDay[day.dayNumber];
 
           return (
             <div key={day.dayNumber} id={`day-${day.dayNumber}`} className="border-t border-gray-100 pt-8 first:border-t-0 first:pt-0">
@@ -846,6 +1062,44 @@ function TourDays({ days, daySelections, onSelectAccommodation, onToggleActivity
                   <h3 className="text-base font-semibold text-orange-600 mb-3">
                     Accommodation on day {day.dayNumber}
                   </h3>
+
+                  <div className="mb-4 border border-gray-200 rounded-md p-3 bg-gray-50">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs text-gray-600">
+                        <span className="font-medium text-gray-700">
+                          {hasDayRoomOverride ? 'Custom setup' : 'Using default setup'}
+                        </span>
+                        <span className="ml-2">
+                          {effectiveRooms.length} room{effectiveRooms.length > 1 ? 's' : ''} · {effectiveTravelers} traveler{effectiveTravelers > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenRoomEditorByDay((prev) => ({
+                            ...prev,
+                            [day.dayNumber]: !prev[day.dayNumber],
+                          }))
+                        }
+                        className="text-xs px-2.5 py-1.5 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-100"
+                      >
+                        {isRoomEditorOpen ? 'Hide accommodation edit' : 'Edit accommodation'}
+                      </button>
+                    </div>
+
+                    {isRoomEditorOpen && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <RoomSelectionEditor
+                          roomSelections={effectiveRooms}
+                          setRoomSelections={(updater) =>
+                            onSetAccommodationRooms(day.dayNumber, updater)
+                          }
+                          compact
+                        />
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-4 overflow-x-auto pb-3 -mx-1 px-1">
                     {day.accommodations.map((hotel) => (
                       <AccommodationCard
@@ -1270,64 +1524,6 @@ function TourBookingPanel({ tour, roomSelections, setRoomSelections, participant
   const [selectedDate, setSelectedDate] = useState('');
   const total = tour.priceFrom * participants;
 
-  const addRoom = () => {
-    setRoomSelections((prev) => [
-      ...prev,
-      { adults: 1, children: 0, childAges: [], breakfast: false },
-    ]);
-  };
-
-  const removeRoom = () => {
-    setRoomSelections((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-  };
-
-  const updateRoom = (roomIndex, updates) => {
-    setRoomSelections((prev) =>
-      prev.map((room, idx) => (idx === roomIndex ? { ...room, ...updates } : room)),
-    );
-  };
-
-  const setAdults = (roomIndex, value) => {
-    updateRoom(roomIndex, { adults: Math.max(1, value) });
-  };
-
-  const setChildren = (roomIndex, value) => {
-    const children = Math.max(0, value);
-    setRoomSelections((prev) =>
-      prev.map((room, idx) => {
-        if (idx !== roomIndex) return room;
-        const childAges = Array.from(
-          { length: children },
-          (_, ageIdx) => {
-            const existing = Number(room.childAges?.[ageIdx]);
-            return Number.isFinite(existing) ? existing : 0;
-          },
-        );
-        return { ...room, children, childAges };
-      }),
-    );
-  };
-
-  const setChildAge = (roomIndex, childIndex, age) => {
-    const normalizedAge = Math.min(17, Math.max(0, Number(age) || 0));
-    setRoomSelections((prev) =>
-      prev.map((room, idx) => {
-        if (idx !== roomIndex) return room;
-        const childAges = [...(room.childAges || [])];
-        childAges[childIndex] = normalizedAge;
-        return { ...room, childAges };
-      }),
-    );
-  };
-
-  const toggleBreakfast = (roomIndex) => {
-    setRoomSelections((prev) =>
-      prev.map((room, idx) =>
-        idx === roomIndex ? { ...room, breakfast: !room.breakfast } : room,
-      ),
-    );
-  };
-
   return (
     <div className="sticky top-6">
       <div className="bg-white border border-gray-200 rounded-lg p-5">
@@ -1347,120 +1543,10 @@ function TourBookingPanel({ tour, roomSelections, setRoomSelections, participant
           />
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-gray-700">Rooms</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={removeRoom}
-              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-            >
-              −
-            </button>
-            <span className="w-6 text-center font-medium text-gray-900">{roomSelections.length}</span>
-            <button
-              onClick={addRoom}
-              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-3 mb-4">
-          {roomSelections.map((room, roomIndex) => (
-            <div key={`room-${roomIndex}`} className="border border-gray-200 rounded-md p-3">
-              <p className="text-sm font-semibold text-gray-800 mb-2">Room: {roomIndex + 1}</p>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Adults</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setAdults(roomIndex, (room.adults || 1) - 1)}
-                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center font-medium text-gray-900">{room.adults || 1}</span>
-                    <button
-                      onClick={() => setAdults(roomIndex, (room.adults || 1) + 1)}
-                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700">Children</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setChildren(roomIndex, (room.children || 0) - 1)}
-                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                    >
-                      −
-                    </button>
-                    <span className="w-6 text-center font-medium text-gray-900">{room.children || 0}</span>
-                    <button
-                      onClick={() => setChildren(roomIndex, (room.children || 0) + 1)}
-                      className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {room.children > 0 && (
-                <div className="mt-3 space-y-2">
-                  {(room.childAges || []).map((age, childIndex) => (
-                    <div
-                      key={`room-${roomIndex}-child-${childIndex}`}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="text-sm text-gray-500">
-                        Age for child {childIndex + 1}
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setChildAge(roomIndex, childIndex, (age || 0) - 1)}
-                          className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                        >
-                          −
-                        </button>
-                        <span className="w-6 text-center font-medium text-gray-900">{Number(age) || 0}</span>
-                        <button
-                          onClick={() => setChildAge(roomIndex, childIndex, (age || 0) + 1)}
-                          className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs text-gray-600">Breakfast</span>
-                <button
-                  onClick={() => toggleBreakfast(roomIndex)}
-                  className={`relative inline-flex w-11 h-6 rounded-full border transition-colors ${
-                    room.breakfast
-                      ? 'bg-blue-600 border-blue-600'
-                      : 'bg-gray-200 border-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`absolute left-0.5 top-0.5 h-5 w-5 bg-white rounded-full transition-transform ${
-                      room.breakfast ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <RoomSelectionEditor
+          roomSelections={roomSelections}
+          setRoomSelections={setRoomSelections}
+        />
 
         <div className="flex items-center justify-between py-3 border-t border-gray-100 mb-4 text-sm">
           <span className="text-gray-600">{participants} travelers × ${tour.priceFrom}</span>
@@ -1597,7 +1683,7 @@ export default function TourDetail() {
   useEffect(() => {
     if (existingItem) {
       if (Array.isArray(existingItem.roomSelections) && existingItem.roomSelections.length > 0) {
-        setRoomSelections(existingItem.roomSelections);
+        setRoomSelections(cloneRoomSelections(existingItem.roomSelections));
       } else {
         setRoomSelections([
           {
@@ -1619,10 +1705,7 @@ export default function TourDetail() {
 
   const participants = Math.max(
     1,
-    roomSelections.reduce(
-      (sum, room) => sum + (Number(room.adults) || 0) + (Number(room.children) || 0),
-      0,
-    ),
+    countRoomTravelers(roomSelections),
   );
 
   // Scroll to day 1 when arriving in edit mode
@@ -1657,6 +1740,29 @@ export default function TourDetail() {
           activities: exists
             ? current.filter((a) => a.id !== activity.id)
             : [...current, activity],
+        },
+      };
+    });
+  };
+
+  const handleSetAccommodationRooms = (dayNumber, nextRoomsOrUpdater) => {
+    setDaySelections((prev) => {
+      const currentDay = prev[dayNumber] || { accommodation: null, activities: [] };
+      const baseRooms =
+        Array.isArray(currentDay.accommodationRooms) && currentDay.accommodationRooms.length > 0
+          ? cloneRoomSelections(currentDay.accommodationRooms)
+          : cloneRoomSelections(roomSelections);
+
+      const resolvedRooms =
+        typeof nextRoomsOrUpdater === 'function'
+          ? nextRoomsOrUpdater(baseRooms)
+          : nextRoomsOrUpdater;
+
+      return {
+        ...prev,
+        [dayNumber]: {
+          ...currentDay,
+          accommodationRooms: cloneRoomSelections(resolvedRooms),
         },
       };
     });
@@ -1728,6 +1834,8 @@ export default function TourDetail() {
             daySelections={daySelections}
             onSelectAccommodation={handleSelectAccommodation}
             onToggleActivity={handleToggleActivity}
+            defaultRoomSelections={roomSelections}
+            onSetAccommodationRooms={handleSetAccommodationRooms}
           />
 
           {tour.tourType !== 'self_drive' && <TourTransport transport={tour.transport} />}
