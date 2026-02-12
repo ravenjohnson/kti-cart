@@ -259,6 +259,15 @@ export default function Activities() {
 
   const set = (key) => (val) => setFilters((f) => ({ ...f, [key]: val }));
   const setE = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
+  const travelers = Math.max(1, Number(filters.travelers) || 1);
+
+  const adjustTravelers = (delta) => {
+    setFilters((f) => {
+      const current = Math.max(1, Number(f.travelers) || 1);
+      const next = Math.min(50, Math.max(1, current + delta));
+      return { ...f, travelers: String(next) };
+    });
+  };
 
   const filtered = useMemo(() => filterActivities(ACTIVITIES, filters), [filters]);
   const hasActiveFilters = Object.values(filters).some((v) => v !== '');
@@ -352,15 +361,23 @@ export default function Activities() {
         </FilterField>
 
         <FilterField label="Travelers">
-          <input
-            type="number"
-            min="1"
-            max="50"
-            placeholder="Any"
-            value={filters.travelers}
-            onChange={setE('travelers')}
-            className="w-24 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => adjustTravelers(-1)}
+              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+            >
+              −
+            </button>
+            <span className="w-6 text-center font-medium text-gray-900">{travelers}</span>
+            <button
+              type="button"
+              onClick={() => adjustTravelers(1)}
+              className="w-7 h-7 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-lg leading-none"
+            >
+              +
+            </button>
+          </div>
         </FilterField>
 
       </FilterBar>

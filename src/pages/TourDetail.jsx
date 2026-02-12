@@ -442,7 +442,7 @@ function Accordion({ title, children, defaultOpen = false }) {
 // HERO
 // ============================================================================
 
-function TourHero({ tour }) {
+function TourHero({ tour, participants }) {
   const isGuided = tour.tourType === 'guided';
   const nights = tour.totalDays - 1;
   const formatDate = (d) => {
@@ -469,6 +469,9 @@ function TourHero({ tour }) {
               {formatDate(tour.season.startDate)} – {formatDate(tour.season.endDate)}
             </span>
           )}
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+            {participants} traveler{participants > 1 ? 's' : ''}
+          </span>
         </div>
         <h1 className="text-3xl font-bold text-gray-900">{tour.title}</h1>
         <p className="mt-2 text-2xl font-bold text-gray-900">
@@ -1519,9 +1522,9 @@ function PanelSelectionSummary({ days, daySelections }) {
 // BOOKING PANEL  (right column, sticky)
 // ============================================================================
 
-function TourBookingPanel({ tour, roomSelections, setRoomSelections, participants, onAddToCart, added, isEditing, daySelections }) {
+function TourBookingPanel({ tour, roomSelections, setRoomSelections, participants, onAddToCart, added, isEditing, daySelections, initialDate = '' }) {
   const [saved, setSaved] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const total = tour.priceFrom * participants;
 
   return (
@@ -1648,15 +1651,27 @@ export default function TourDetail() {
   const { addToCart, updateCartItem, cartItems } = useCart();
 
   const editItemId = searchParams.get('edit');
+  const requestedAdults = Math.max(1, Number(searchParams.get('adults')) || 1);
+  const requestedChildren = Math.max(0, Number(searchParams.get('children')) || 0);
+  const requestedDate = searchParams.get('date') || '';
   const existingItem = editItemId ? cartItems.find((item) => item.id === editItemId) : null;
   const isEditing = !!existingItem;
 
   const tour = TOUR_DATA[tourId];
 
   const [added, setAdded] = useState(false);
-  const [roomSelections, setRoomSelections] = useState([
-    { adults: 1, children: 0, childAges: [], breakfast: false },
-  ]);
+  const [roomSelections, setRoomSelections] = useState(() => {
+    const initAdults = Math.max(1, Number(searchParams.get('adults')) || 1);
+    const initChildren = Math.max(0, Number(searchParams.get('children')) || 0);
+    return [
+      {
+        adults: initAdults,
+        children: initChildren,
+        childAges: Array.from({ length: initChildren }, () => 0),
+        breakfast: false,
+      },
+    ];
+  });
   const [daySelections, setDaySelections] = useState({});
   const [carRental, setCarRental] = useState({
     pickupLocation: CAR_RENTAL_LOCATIONS[0],
@@ -1825,7 +1840,7 @@ export default function TourDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column */}
         <div className="lg:col-span-2">
-          <TourHero tour={tour} />
+          <TourHero tour={tour} participants={participants} />
           <TourBasics tour={tour} />
 
           {/* Day-by-day interactive selection */}
@@ -1864,6 +1879,7 @@ export default function TourDetail() {
             added={added}
             isEditing={isEditing}
             daySelections={daySelections}
+            initialDate={requestedDate}
           />
         </div>
       </div>

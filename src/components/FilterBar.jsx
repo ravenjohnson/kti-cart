@@ -59,6 +59,94 @@ export function PillSelect({ options, value, onChange, allLabel = 'All' }) {
   );
 }
 
+// Compact travelers button that opens a popover with adult/children +/- controls.
+// adults: number, children: number, onChangeAdults/onChangeChildren: (n: number) => void
+export function TravelersPopover({ adults = 1, children = 0, onChangeAdults, onChangeChildren }) {
+  const [open, setOpen] = useState(false);
+
+  const label = (() => {
+    const parts = [];
+    if (adults > 0) parts.push(`${adults} adult${adults !== 1 ? 's' : ''}`);
+    if (children > 0) parts.push(`${children} child${children !== 1 ? 'ren' : ''}`);
+    return parts.length ? parts.join(' · ') : '1 adult';
+  })();
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+      >
+        <span className="text-gray-500">👤</span>
+        <span className="text-gray-800">{label}</span>
+        <span className="text-xs text-gray-400 ml-0.5">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-20 w-52">
+          <div className="space-y-4">
+            {/* Adults */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-900">Adults</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onChangeAdults(Math.max(1, adults - 1))}
+                  className="w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-base leading-none"
+                >
+                  −
+                </button>
+                <span className="w-5 text-center font-medium text-gray-900">{adults}</span>
+                <button
+                  type="button"
+                  onClick={() => onChangeAdults(Math.min(20, adults + 1))}
+                  className="w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-base leading-none"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Children */}
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium text-gray-900">Children</span>
+                <p className="text-xs text-gray-400">Under 18</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onChangeChildren(Math.max(0, children - 1))}
+                  className="w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-base leading-none"
+                >
+                  −
+                </button>
+                <span className="w-5 text-center font-medium text-gray-900">{children}</span>
+                <button
+                  type="button"
+                  onClick={() => onChangeChildren(Math.min(20, children + 1))}
+                  className="w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-base leading-none"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="mt-4 w-full py-1.5 text-sm font-medium text-white bg-gray-800 rounded-md hover:bg-gray-700"
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Shared filter bar shell.
 //
 // Props:

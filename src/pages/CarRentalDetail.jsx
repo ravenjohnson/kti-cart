@@ -433,7 +433,7 @@ export default function CarRentalDetail() {
                       <option value="65+">65+</option>
                     </select>
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Driver's country
                     </label>
@@ -449,7 +449,7 @@ export default function CarRentalDetail() {
                       <option value="France">I live in France</option>
                       <option value="Other">Other</option>
                     </select>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div>
@@ -468,7 +468,7 @@ export default function CarRentalDetail() {
             </div>
 
             {/* Insurance */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Choose insurances</h2>
               <div className="space-y-3">
                 {INSURANCE_OPTIONS.map((option) => (
@@ -503,10 +503,10 @@ export default function CarRentalDetail() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* Extras */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Choose extras</h2>
               <div className="space-y-3">
                 {EXTRAS_OPTIONS.map((option) => (
@@ -541,7 +541,7 @@ export default function CarRentalDetail() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Sidebar - Price Summary */}

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FilterBar, { FilterField, PillSelect, ICELAND_REGIONS } from '../components/FilterBar';
+import FilterBar, { FilterField, PillSelect, TravelersPopover, ICELAND_REGIONS } from '../components/FilterBar';
 
 const TOURS = [
   {
@@ -193,7 +193,8 @@ const EXPERIENCES = [
 
 const INITIAL_FILTERS = {
   date: '',
-  travelers: '1',
+  adults: '1',
+  children: '0',
   tourType: '',
   experience: '',
   // secondary
@@ -230,6 +231,9 @@ export default function Tours() {
 
   const set = (key) => (val) => setFilters((f) => ({ ...f, [key]: val }));
   const setE = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
+  const adults = Math.max(1, Number(filters.adults) || 1);
+  const children = Math.max(0, Number(filters.children) || 0);
+  const travelers = adults + children;
 
   const filtered = useMemo(() => filterTours(TOURS, filters), [filters]);
   const hasActiveFilters = Object.values(filters).some(Boolean);
@@ -322,14 +326,11 @@ export default function Tours() {
         </FilterField>
 
         <FilterField label="Travelers">
-          <input
-            type="number"
-            min="1"
-            max="20"
-            placeholder="Any"
-            value={filters.travelers}
-            onChange={setE('travelers')}
-            className="w-24 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <TravelersPopover
+            adults={adults}
+            children={children}
+            onChangeAdults={(v) => setFilters((f) => ({ ...f, adults: String(v) }))}
+            onChangeChildren={(v) => setFilters((f) => ({ ...f, children: String(v) }))}
           />
         </FilterField>
 
@@ -402,7 +403,7 @@ export default function Tours() {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/tours/${tour.id}`)}
+                  onClick={() => navigate(`/tours/${tour.id}?adults=${adults}&children=${children}${filters.date ? `&date=${filters.date}` : ''}`)}
                   className="w-full py-2 px-4 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                 >
                   View Details & Book
