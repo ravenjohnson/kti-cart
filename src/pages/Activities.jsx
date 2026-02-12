@@ -17,6 +17,7 @@ const ACTIVITIES = [
     image: 'https://picsum.photos/seed/glacier-hike/800/450',
     // Filter fields
     category: 'Adventure',
+    experience: 'Glacier',
     durationCategory: 'Half-day',
     timeOfDay: 'Morning',
     indoor: false,
@@ -36,6 +37,7 @@ const ACTIVITIES = [
     minAge: 12,
     image: 'https://picsum.photos/seed/silfra-snorkeling/800/450',
     category: 'Adventure',
+    experience: 'Snorkeling',
     durationCategory: 'Half-day',
     timeOfDay: 'Morning',
     indoor: false,
@@ -55,6 +57,7 @@ const ACTIVITIES = [
     minAge: 8,
     image: 'https://picsum.photos/seed/ice-cave-tour/800/450',
     category: 'Nature',
+    experience: 'Ice Cave',
     durationCategory: 'Half-day',
     timeOfDay: 'Afternoon',
     indoor: false,
@@ -74,6 +77,7 @@ const ACTIVITIES = [
     minAge: 0,
     image: 'https://picsum.photos/seed/whale-watching/800/450',
     category: 'Nature',
+    experience: 'Whale Watching',
     durationCategory: 'Half-day',
     timeOfDay: 'Morning',
     indoor: false,
@@ -93,6 +97,7 @@ const ACTIVITIES = [
     minAge: 0,
     image: 'https://picsum.photos/seed/northern-lights-hunt/800/450',
     category: 'Nature',
+    experience: 'Northern Lights',
     durationCategory: 'Half-day',
     timeOfDay: 'Evening',
     indoor: false,
@@ -112,6 +117,7 @@ const ACTIVITIES = [
     minAge: 6,
     image: 'https://picsum.photos/seed/horseback-riding-iceland/800/450',
     category: 'Family',
+    experience: 'Horse Riding',
     durationCategory: 'Short',
     timeOfDay: 'Morning',
     indoor: false,
@@ -131,6 +137,7 @@ const ACTIVITIES = [
     minAge: 0,
     image: 'https://picsum.photos/seed/geothermal-cooking/800/450',
     category: 'Culture',
+    experience: 'Hot Springs',
     durationCategory: 'Half-day',
     timeOfDay: 'Afternoon',
     indoor: false,
@@ -150,6 +157,7 @@ const ACTIVITIES = [
     minAge: 0,
     image: 'https://picsum.photos/seed/lava-tunnel-iceland/800/450',
     category: 'Nature',
+    experience: 'Volcanic',
     durationCategory: 'Short',
     timeOfDay: 'Morning',
     indoor: true,
@@ -169,6 +177,7 @@ const ACTIVITIES = [
     minAge: 14,
     image: 'https://picsum.photos/seed/kayaking-eastfjords/800/450',
     category: 'Adventure',
+    experience: 'Kayaking',
     durationCategory: 'Full-day',
     timeOfDay: 'Morning',
     indoor: false,
@@ -188,6 +197,7 @@ const ACTIVITIES = [
     minAge: 16,
     image: 'https://picsum.photos/seed/yoga-hotspring-iceland/800/450',
     category: 'Wellness',
+    experience: 'Hot Springs',
     durationCategory: 'Short',
     timeOfDay: 'Morning',
     indoor: false,
@@ -196,10 +206,22 @@ const ACTIVITIES = [
   },
 ];
 
+const EXPERIENCES = [
+  'Northern Lights',
+  'Whale Watching',
+  'Glacier',
+  'Hot Springs',
+  'Horse Riding',
+  'Ice Cave',
+  'Snorkeling',
+  'Kayaking',
+  'Volcanic',
+];
+
 const INITIAL_FILTERS = {
   date: '',
   travelers: '1',
-  region: '',
+  experience: '',
   category: '',
   // secondary
   timeOfDay: '',
@@ -209,8 +231,12 @@ const INITIAL_FILTERS = {
   minAge: '',
 };
 
-function filterActivities(activities) {
-  return activities;
+function filterActivities(activities, f) {
+  return activities.filter((a) => {
+    if (f.experience && a.experience !== f.experience) return false;
+    if (f.category && a.category !== f.category) return false;
+    return true;
+  });
 }
 
 const DIFFICULTY_STYLE = {
@@ -234,16 +260,11 @@ export default function Activities() {
   const set = (key) => (val) => setFilters((f) => ({ ...f, [key]: val }));
   const setE = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
-  const filtered = useMemo(() => filterActivities(ACTIVITIES), []);
+  const filtered = useMemo(() => filterActivities(ACTIVITIES, filters), [filters]);
   const hasActiveFilters = Object.values(filters).some((v) => v !== '');
   const moreFiltersActiveCount = [
     filters.timeOfDay, filters.durationCategory, filters.difficulty, filters.setting, filters.minAge,
   ].filter((v) => v !== '').length;
-
-  // Region list scoped to regions present in the activity data
-  const availableRegions = [...new Set(ACTIVITIES.map((a) => a.region))].filter((r) =>
-    ICELAND_REGIONS.includes(r),
-  );
 
   const moreFiltersPanel = (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -317,15 +338,15 @@ export default function Activities() {
           />
         </FilterField>
 
-        <FilterField label="Where">
+        <FilterField label="Experience">
           <select
-            value={filters.region}
-            onChange={setE('region')}
+            value={filters.experience}
+            onChange={setE('experience')}
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All regions</option>
-            {availableRegions.map((r) => (
-              <option key={r} value={r}>{r}</option>
+            <option value="">All experiences</option>
+            {EXPERIENCES.map((e) => (
+              <option key={e} value={e}>{e}</option>
             ))}
           </select>
         </FilterField>

@@ -18,6 +18,7 @@ const TOURS = [
     included: ['3 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities'],
     // Filter fields
     regions: ['South Iceland', 'Reykjavík'],
+    experiences: ['Glacier'],
     tourType: 'Guided',
     availableDates: ['2025-06-10', '2025-06-17', '2025-06-24', '2025-07-01', '2025-07-08'],
     maxTravelers: 12,
@@ -39,6 +40,7 @@ const TOURS = [
     ],
     included: ['4 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities', 'Some meals'],
     regions: ['South Iceland', 'West Iceland'],
+    experiences: ['Hot Springs'],
     tourType: 'Guided',
     availableDates: ['2025-06-12', '2025-06-19', '2025-07-03', '2025-07-10', '2025-08-07'],
     maxTravelers: 15,
@@ -60,6 +62,7 @@ const TOURS = [
     ],
     included: ['6 nights accommodation', 'Car rental (CDW included)', 'Detailed route book & GPS', 'All road tolls'],
     regions: ['South Iceland', 'East Iceland', 'North Iceland', 'Akureyri'],
+    experiences: ['Glacier', 'Whale Watching', 'Northern Lights'],
     tourType: 'Self-drive',
     availableDates: ['2025-06-07', '2025-06-28', '2025-07-19', '2025-08-09'],
     maxTravelers: 10,
@@ -80,6 +83,7 @@ const TOURS = [
     ],
     included: ['2 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities'],
     regions: ['South Iceland', 'East Iceland'],
+    experiences: ['Northern Lights', 'Ice Cave'],
     tourType: 'Guided',
     availableDates: ['2025-01-10', '2025-01-17', '2025-02-07', '2025-11-14', '2025-12-05'],
     maxTravelers: 8,
@@ -101,6 +105,7 @@ const TOURS = [
     ],
     included: ['4 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities', 'Breakfast daily'],
     regions: ['West Fjords', 'West Iceland'],
+    experiences: ['Kayaking'],
     tourType: 'Guided',
     availableDates: ['2025-06-15', '2025-06-29', '2025-07-13', '2025-07-27'],
     maxTravelers: 8,
@@ -122,6 +127,7 @@ const TOURS = [
     ],
     included: ['3 nights accommodation', 'All transportation', 'Professional guide', 'Listed activities'],
     regions: ['West Iceland'],
+    experiences: ['Glacier', 'Whale Watching', 'Volcanic'],
     tourType: 'Guided',
     availableDates: ['2025-05-10', '2025-05-24', '2025-06-07', '2025-07-05', '2025-09-06'],
     maxTravelers: 12,
@@ -142,6 +148,7 @@ const TOURS = [
     ],
     included: ['2 nights mountain hut', 'Detailed route guide', 'Emergency contact'],
     regions: ['South Iceland', 'North Iceland'],
+    experiences: ['Hot Springs', 'Volcanic'],
     tourType: 'Self-drive',
     availableDates: ['2025-07-05', '2025-07-12', '2025-07-19', '2025-08-02', '2025-08-09'],
     maxTravelers: 6,
@@ -162,6 +169,7 @@ const TOURS = [
     ],
     included: ['1 night boutique hotel', 'Private guide', 'All activities', 'Welcome dinner'],
     regions: ['Reykjavík'],
+    experiences: [],
     tourType: 'Private',
     availableDates: ['2025-05-01', '2025-05-08', '2025-06-05', '2025-07-03', '2025-08-21', '2025-11-06', '2025-12-04'],
     maxTravelers: 4,
@@ -171,11 +179,23 @@ const TOURS = [
   },
 ];
 
+const EXPERIENCES = [
+  'Northern Lights',
+  'Whale Watching',
+  'Glacier',
+  'Hot Springs',
+  'Horse Riding',
+  'Ice Cave',
+  'Snorkeling',
+  'Kayaking',
+  'Volcanic',
+];
+
 const INITIAL_FILTERS = {
   date: '',
   travelers: '1',
   tourType: '',
-  region: '',
+  experience: '',
   // secondary
   duration: '',
   difficulty: '',
@@ -184,8 +204,12 @@ const INITIAL_FILTERS = {
   season: '',
 };
 
-function filterTours(tours) {
-  return tours;
+function filterTours(tours, f) {
+  return tours.filter((t) => {
+    if (f.tourType && t.tourType !== f.tourType) return false;
+    if (f.experience && !(t.experiences || []).includes(f.experience)) return false;
+    return true;
+  });
 }
 
 const TOUR_TYPE_BADGE = {
@@ -207,7 +231,7 @@ export default function Tours() {
   const set = (key) => (val) => setFilters((f) => ({ ...f, [key]: val }));
   const setE = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
-  const filtered = useMemo(() => filterTours(TOURS), []);
+  const filtered = useMemo(() => filterTours(TOURS, filters), [filters]);
   const hasActiveFilters = Object.values(filters).some(Boolean);
   const moreFiltersActiveCount = [
     filters.duration, filters.difficulty, filters.theme, filters.maxPrice, filters.season,
@@ -284,15 +308,15 @@ export default function Tours() {
           />
         </FilterField>
 
-        <FilterField label="Where">
+        <FilterField label="Experience">
           <select
-            value={filters.region}
-            onChange={setE('region')}
+            value={filters.experience}
+            onChange={setE('experience')}
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All regions</option>
-            {ICELAND_REGIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
+            <option value="">All experiences</option>
+            {EXPERIENCES.map((e) => (
+              <option key={e} value={e}>{e}</option>
             ))}
           </select>
         </FilterField>

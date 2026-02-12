@@ -941,6 +941,115 @@ function TourTransport({ transport }) {
 // BRING WITH YOU
 // ============================================================================
 
+// ============================================================================
+// CAR RENTAL FORM (self-drive tours only)
+// ============================================================================
+
+const CAR_RENTAL_LOCATIONS = ['Keflavík Airport', 'Reykjavík City', 'Akureyri'];
+
+function TourCarRentalForm({ values, onChange }) {
+  const { pickupLocation, pickupDate, dropoffDate, pickupTime, dropoffTime, driverAge, flightNumber } = values;
+
+  const timeOptions = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00');
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Car Rental Details</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+
+        {/* Location */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Pick-up & drop-off location</label>
+          <select
+            value={pickupLocation}
+            onChange={(e) => onChange('pickupLocation', e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {CAR_RENTAL_LOCATIONS.map((loc) => (
+              <option key={loc} value={loc}>✈️ {loc}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pick-up date</label>
+            <input
+              type="date"
+              value={pickupDate}
+              onChange={(e) => onChange('pickupDate', e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Drop-off date</label>
+            <input
+              type="date"
+              value={dropoffDate}
+              onChange={(e) => onChange('dropoffDate', e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Times */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pick-up time</label>
+            <select
+              value={pickupTime}
+              onChange={(e) => onChange('pickupTime', e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {timeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Drop-off time</label>
+            <select
+              value={dropoffTime}
+              onChange={(e) => onChange('dropoffTime', e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {timeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Driver age */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Driver's age</label>
+            <select
+              value={driverAge}
+              onChange={(e) => onChange('driverAge', e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="20-25">20 – 25</option>
+              <option value="25-30">25 – 30</option>
+              <option value="30-65">30 – 65</option>
+              <option value="65+">65+</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Flight number */}
+        <div>
+          <label className="block text-sm font-medium text-blue-600 mb-2">Add arrival flight number</label>
+          <input
+            type="text"
+            value={flightNumber}
+            onChange={(e) => onChange('flightNumber', e.target.value)}
+            placeholder="Flight info ensures timely pick-up"
+            className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TourBringWithYou({ items }) {
   if (!items?.length) return null;
   return (
@@ -1296,6 +1405,15 @@ export default function TourDetail() {
   const [added, setAdded] = useState(false);
   const [participants, setParticipants] = useState(1);
   const [daySelections, setDaySelections] = useState({});
+  const [carRental, setCarRental] = useState({
+    pickupLocation: CAR_RENTAL_LOCATIONS[0],
+    pickupDate: '',
+    dropoffDate: '',
+    pickupTime: '13:00',
+    dropoffTime: '13:00',
+    driverAge: '30-65',
+    flightNumber: '',
+  });
 
   // Initialise day selections when tour loads
   useEffect(() => {
@@ -1314,6 +1432,9 @@ export default function TourDetail() {
       setParticipants(existingItem.participants || 1);
       if (existingItem.daySelections) {
         setDaySelections(existingItem.daySelections);
+      }
+      if (existingItem.carRental) {
+        setCarRental(existingItem.carRental);
       }
     }
   }, [existingItem]);
@@ -1374,6 +1495,7 @@ export default function TourDetail() {
       includedActivities: Object.values(daySelections)
         .flatMap((ds) => ds.activities || [])
         .map((a) => ({ name: a.name, requiresShoeSize: false })),
+      ...(tour.tourType === 'self_drive' ? { carRental } : {}),
       needsInfo: true,
     };
 
@@ -1422,6 +1544,14 @@ export default function TourDetail() {
           />
 
           {tour.tourType !== 'self_drive' && <TourTransport transport={tour.transport} />}
+
+          {tour.tourType === 'self_drive' && (
+            <TourCarRentalForm
+              values={carRental}
+              onChange={(field, value) => setCarRental((prev) => ({ ...prev, [field]: value }))}
+            />
+          )}
+
           <TourBringWithYou items={tour.bringWithYou} />
           <TourConditions conditions={tour.conditions} />
           <TourMedia media={tour.media} />
