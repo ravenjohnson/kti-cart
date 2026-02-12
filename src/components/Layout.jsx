@@ -15,7 +15,7 @@ export default function Layout({ children }) {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="text-2xl font-bold text-gray-900">
-              Iceland Travel Checkout
+              KTI Checkout
             </Link>
 
             {/* Navigation */}
